@@ -3,7 +3,7 @@
 # whohas, a Perl utility to display availability of source
 # and binary packages from major Linux and BSD distributions
 #
-# Copyright (C) Philipp L. Wesche 2005-2008
+# Copyright (C) Philipp L. Wesche 2005-2009
 #
 #
 # This program is free software; you can redistribute it and/or modify
@@ -20,17 +20,20 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-use strict;
-use sigtrap;
+#use strict;
+#use sigtrap;
 
-#TODO get more info about slackware, debian, ubuntu and netbsd packages from subsequent links
+#TODO --fetch-unstable switch
+#TODO make sure that debian's version numbers are from i386
+#TODO get date info about debian, ubuntu (link is to changelog)
+#TODO get size and date info about slackware packages from subsequent links
+#TODO fedora is using unsafe search, compare with subroutine search_by_name; basically, you might suffer an accidental match to something in the html code
 #TODO architecture tests for those that support several
-#TODO some version numbers missing in Debian
 #TODO Gentoo: only report two most recent for each package?
 #TODO make more use of the conf directory, e.g. for Fedora, Sourcemage, so we download those indexes only sparingly, and save ourselves processing time; MAKE SURE YOU WRITE THE PROCESSED RESULTS FOR EASY PARSING ON THE NEXT RUN
-#TODO add option to suppress caching and to force a reload (newly fetched file written to cache)
+#TODO we can also cache search results there to drastically reduce query time on subsequent queries
+#TODO add option to override the cache (newly fetched file written to cache)
 #TODO ubuntu: allow two releases: the long term supported and the most recent
-#TODO fedora is using unsafe search, compare with subroutine search_by_name; basically, you might suffer an accidental match to something in the html code
 
 use Env qw(HOME);
 use threads;
@@ -41,14 +44,20 @@ unless (-d $confdir) {
 	mkdir ($confdir, 0777);
 }
 
-my @columns = (11,25,10,4,10,11);
+my @columns = (11,38,18,4,10,11);
 my $cols = 6;
+
+my $fedora_release		=  10		;
+my $ubuntu_current_release	= "intrepid"	;
+my $opensuse_rel_string		= "111"		;
+my $mandrivaVersion		= "2009.0"	;
 
 my $arch_bool		= 1;
 my $debian_bool		= 1;
 my $fink_bool		= 1;
 my $freebsd_bool	= 1;
 my $macports_bool	= 1;
+my $mandriva_bool	= 1;
 my $netbsd_bool		= 1;
 my $openbsd_bool	= 1;
 my $opensuse_bool	= 1;
@@ -60,6 +69,18 @@ my $fedora_bool		= 1;
 
 my @thrs;
 my $here = 0;
+my $useThreads = 1;
+my $goDeep = 1;
+
+if (@ARGV > 1) {
+	for (my $i = 0; $i < @ARGV; $i++) {
+		if ($ARGV[$i] eq "--shallow") {
+			$goDeep = 0;
+			splice @ARGV, $i, 1;
+			last;
+		}
+	}
+}
 
 if (@ARGV > 1) {
 	for (my $i = 0; $i < @ARGV; $i++) {
@@ -69,6 +90,7 @@ if (@ARGV > 1) {
 			$fink_bool		= 0;
 			$freebsd_bool		= 0;
 			$macports_bool		= 0;
+			$mandriva_bool		= 0;
 			$netbsd_bool		= 0;
 			$openbsd_bool		= 0;
 			$opensuse_bool		= 0;
@@ -84,6 +106,7 @@ if (@ARGV > 1) {
 				} elsif (	$parts[$a] =~ /fink/i) {	$fink_bool		= 1;
 				} elsif (	$parts[$a] =~ /freebsd/i) {	$freebsd_bool		= 1;
 				} elsif (	$parts[$a] =~ /macports/i) {	$macports_bool		= 1;
+				} elsif (	$parts[$a] =~ /mandriva/i) {	$mandriva_bool		= 1;
 				} elsif (	$parts[$a] =~ /netbsd/i) {	$netbsd_bool		= 1;
 				} elsif (	$parts[$a] =~ /openbsd/i) {	$openbsd_bool		= 1;
 				} elsif (	$parts[$a] =~ /opensuse/i) {	$opensuse_bool		= 1;
@@ -92,6 +115,8 @@ if (@ARGV > 1) {
 				} elsif (	$parts[$a] =~ /ubuntu/i) {	$ubuntu_bool		= 1;
 				} elsif (	$parts[$a] =~ /gentoo/i) {	$gentoo_bool		= 1;
 				} elsif (	$parts[$a] =~ /fedora/i) {	$fedora_bool		= 1;
+				} else {
+					warn "Repository or distribution specified has not been recognised. You specified: $parts[$a]. Recognised options are: archlinux, debian, fedora, fink, freebsd, gentoo, macports, netbsd, openbsd, opensuse, slackware, sourcemage, ubuntu\n";
 				}
 			}
 			splice @ARGV, $i, 2;
@@ -120,6 +145,9 @@ if (@ARGV == 1) {
 		}
 		if ($macports_bool == 1) {
 			$thrs[$here++] = threads->new(\&macports,	$ARGV[0]);
+		}
+		if ($mandriva_bool == 1) {
+			$thrs[$here++] = threads->new(\&mandriva,	$ARGV[0]);
 		}
 		if ($netbsd_bool == 1) {
 #			$thrs[$here++] = threads->new(\&netbsd,		$ARGV[0]); #this worked, but was slow
@@ -152,6 +180,7 @@ if (@ARGV == 1) {
 		}
 	}
 } elsif ($ARGV[0] eq "--no-threads") {
+	$useThreads = 0;
 	if ($arch_bool == 1) {
 		&arch(		$ARGV[1]);
 		&aur(		$ARGV[1]);
@@ -173,6 +202,9 @@ if (@ARGV == 1) {
 	}
 	if ($macports_bool == 1) {
 		&macports(	$ARGV[1]);
+	}
+	if ($mandriva_bool == 1) {
+		&mandriva(	$ARGV[1]);
 	}
 	if ($netbsd_bool == 1) {
 #		&netbsd(	$ARGV[1]);
@@ -202,7 +234,6 @@ if (@ARGV == 1) {
 
 sub fedora {
 	my $baseurl = "http://download.fedora.redhat.com/pub/fedora/linux/releases/";
-	my $current_release = 10;
 	my $arch = "i386";
 	my $searchy = $_[0];
 	my @names;
@@ -211,7 +242,7 @@ sub fedora {
 	my @sizes;
 	my @repos;
 	my @urls;
-	for (my $i = 10; $i <= $current_release; $i++) { # just the one release for now
+	for (my $i = 10; $i <= $fedora_release; $i++) { # just the one release for now
 		my @fed_repos = ("core","Everything");
 		my @fed_urls = ("$i/Everything/$arch/os/Packages/");
 		for (my $a = 0; $a < @fed_urls; $a++) {
@@ -219,10 +250,11 @@ sub fedora {
 			for (my $li = 0; $li < @lines; $li++) {
 				if ($lines[$li] =~ /$searchy/ && $lines[$li] =~ /\/icons\/bc\_rpm\.png/) {
 					my @parts = split /\<|\>|\"/, $lines[$li];
-					my $prev_release = $current_release - 1;
-					$parts[22] =~ s/\.fc($current_release|$prev_release).+//;
+					my $prev_release = $fedora_release - 1;
+					$parts[22] =~ s/\.fc($fedora_release|$prev_release).+//;
 					my ($name,$version) = &combos($parts[22]);
 					push @dates, &month_to_digits($parts[32]);
+					$parts[38] =~ s/^\s+//;
 					push @sizes, $parts[38];
 					push @names, $name;
 					push @versions, $version;
@@ -255,7 +287,6 @@ sub month_to_digits {
 }
 
 sub ubuntu {
-	my $ubuntu_current_release = "intrepid";
 	my $base = "http://packages.ubuntu.com";
 	my $query = $base."/search?keywords=".$_[0]."&searchon=names&suite=".$ubuntu_current_release."&section=all";
 	my @lines = split /\n/, &fetchdoc($query);
@@ -276,11 +307,29 @@ sub ubuntu {
 			push @groups, $parts[4];
 			push @repos, "";
 			push @urls,  $base.$parts[2];
-			push @sizes, "";
 			push @dates, "";
 			@parts = split />|: /, $lines[$i+6];
 			push @versions, $parts[1];
 			$i += 11;
+		}
+	}
+	if ($goDeep == 1) {
+		if ($useThreads == 1) {
+			my @thr;
+			for (my $i = 0; $i < @urls; $i++) {
+				push @thr, threads->new(\&debian_sizes, $urls[$i]);
+			}
+			for (my $i = 0; $i < @thr; $i++) {
+				push @sizes, $thr[$i]->join;
+			}
+		} else {
+			for (my $i = 0; $i < @urls; $i++) {
+				push @sizes, &debian_sizes($urls[$i]);
+			}
+		}
+	} else {
+		for (my $i = 0; $i < @urls; $i++) {
+			push @sizes, "";
 		}
 	}
 	for (my $i = 0; $i < @repos; $i++) {
@@ -813,6 +862,41 @@ sub slack {
 	return ();
 }
 
+sub debian_sizes {
+	my @lines = split /\n/, &fetchdoc($_[0]);
+	for (my $i = 0; $i < @lines; $i++) {
+		if ($lines[$i] =~ /download\">i386<\/a/) {
+			my @newparts = split /\"size\"\>|<\/td>/, $lines[$i+3];
+			return &debian_size_convert($newparts[1]);
+		}
+	}
+	for (my $i = 0; $i < @lines; $i++) {
+		if ($lines[$i] =~ /download\">all<\/a/) {
+			my @newparts = split /\"size\"\>|<\/td>/, $lines[$i+3];
+			return &debian_size_convert($newparts[1]);
+		}
+	}
+}
+
+sub debian_size_convert {
+	if ($_[0] =~ s/\&nbsp;kB$//) {
+		$_[0] =~ s/,//g;
+		my @parts = split /\./, $_[0];
+		my @partses = split //, $parts[1];
+		if ($partses[0] >= 5) {
+			$parts[0]++;
+		}
+		if ($parts[0] < 1000) {
+			return $parts[0]."K";
+		} else {
+			my $val = round($parts[0]/1024);
+			return $val."M";
+		}
+	} else {
+		die "Strange packet size encountered: $_[0]\n";
+	}
+}
+
 sub debian {
 	my $debianbase = "http://packages.debian.org";
 	my @names;
@@ -834,12 +918,31 @@ sub debian {
 				push @groups, $parts[4];
 				push @repos, $dists[$x];
 				push @urls,  $debianbase.$parts[2];
-				push @sizes, "";
 				push @dates, "";
 				@parts = split />|: /, $lines[$i+6];
+				$parts[1] =~ s/ \[\<strong.*//;
 				push @versions, $parts[1];
 				$i += 11;
 			}
+		}
+	}
+	if ($goDeep == 1) {
+		if ($useThreads == 1) {
+			my @thr;
+			for (my $i = 0; $i < @urls; $i++) {
+				push @thr, threads->new(\&debian_sizes, $urls[$i]);
+			}
+			for (my $i = 0; $i < @thr; $i++) {
+				push @sizes, $thr[$i]->join;
+			}
+		} else {
+			for (my $i = 0; $i < @urls; $i++) {
+				push @sizes, &debian_sizes($urls[$i]);
+			}
+		}
+	} else {
+		for (my $i = 0; $i < @urls; $i++) {
+			push @sizes, "";
 		}
 	}
 	for (my $i = 0; $i < @repos; $i++) {
@@ -967,6 +1070,7 @@ sub fetchdoc {
 	$url =~ s/\&amp\;/\&/ig;   # convert &amp; to &
 
 	my $ua = LWP::UserAgent->new;
+	$ua->env_proxy;
         my @firstline;
         my @response;
         for (my $count = 0; ; ++$count) {   # termination condition inside loop
@@ -985,7 +1089,7 @@ sub fetchdoc {
 			last;
 		} elsif ($count > 4) {   # loop termination condition
 			unless ($silent == 1) {
-				print ("Tried fetching \"$url\" five times for $_[1]. Giving up.\n");
+				print ("Tried fetching \"$url\" five times. Giving up.\n");
 			}
 			return ();
 			last;
@@ -1043,7 +1147,7 @@ sub prep_suse_repo {
 }
 
 sub opensuse {
-	my $release_string = "111";
+	my $release_string = $opensuse_rel_string;
 	my $opensusebase = "http://packages.opensuse-community.org";
 	my @names;
 	my @repos;
@@ -1079,6 +1183,54 @@ sub opensuse {
 	return();
 }
 
+sub netbsd_pkgsrc_size {
+	my @retvals;
+	my $continueAt = 0;
+	my @lines = split /\n|<br\/>/, &fetchdoc($_[0]);
+	for (my $i = 0; $i < @lines; $i++) {
+		if ($lines[$i] =~ /Filesize:/) {
+			my @parts = split /<\/b> /, $lines[$i];
+			push @retvals, &sizeconvert($parts[1]);
+			$continueAt = $i;
+			last;
+		}
+	}
+	if ($continueAt == 0) {
+		push @retvals, "";
+	}
+	$retvals[1] = ""; #just in case there's no match found
+	for (my $i = $continueAt; $i < @lines; $i++) {
+		if ($lines[$i] =~ /Updated to version|Package added to/) {
+			my @parts = split /<b>|<\/b>/, $lines[$i];
+			$retvals[1] = $parts[1];
+			last;
+		}
+	}
+	return @retvals;
+}
+
+sub round {
+    my($number) = shift;
+    return int($number + .5);
+}
+
+sub sizeconvert {
+	if ($_[0] =~ s/ KB$//) {
+		my @parts = split /\./, $_[0];
+		my @partses = split //, $parts[1];
+		if ($partses[0] >= 5) {
+			$parts[0]++;
+		}
+		if ($parts[0] < 1000) {
+			return $parts[0]."K";
+		} else {
+			my $val = round($parts[0]/1024);
+			return $val."M";
+		}
+	} else {
+		die "Strange packet size encountered: $_[0]\n";
+	}
+}
 
 sub netbsd_pkgsrc {
 	my @lines = split /\n|<br\/>/, &fetchdoc("http://pkgsrc.se/search.php?so=".$_[0]);
@@ -1089,15 +1241,32 @@ sub netbsd_pkgsrc {
 	my @repos;
 	my @urls;
 	for (my $i = 0; $i < @lines; $i++) {
-		if ($lines[$i] =~ /version/) {
+		if ($lines[$i] =~ /version.+maintainer/) {
 			my @parts = split /href="|<\/a>, <em><b>version |<\/b>, maintainer|\">/, $lines[$i];
-#			print "@parts\n";
 			push @urls, 	$parts[1];
 			push @versions, $parts[3];
 			my @subparts = split /\//, $parts[2];
 			push @repos, $subparts[0];
 			push @names, $subparts[1];
-			push @sizes, "";
+		}
+	}
+	if ($goDeep == 1) {
+		if ($useThreads == 1) {
+			my @thr;
+			for (my $i = 0; $i < @urls; $i++) {
+				push @thr, threads->new(\&netbsd_pkgsrc_size, $urls[$i]);
+			}
+			for (my $i = 0; $i < @thr; $i++) {
+				($sizes[$i],$dates[$i]) = $thr[$i]->join;
+			}
+		} else {
+			for (my $i = 0; $i < @urls; $i++) {
+				($sizes[$i],$dates[$i]) = &netbsd_pkgsrc_size($urls[$i]);
+			}
+		}
+	} else {
+		for (my $i = 0; $i < @urls; $i++) {
+			($sizes[$i],$dates[$i]) = ("","");
 		}
 	}
 	for (my $i = 0; $i < @repos; $i++) {
@@ -1195,6 +1364,40 @@ sub template_listing {
 	my @urls     = @$p6;
 	for (my $i = 0; $i < @repos; $i++) {
 		&pretty_print($cols,@columns,$distroname,$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+	return ();
+}
+
+sub mandriva {
+	my $baseurl = "http://sophie.zarb.org";
+	my @names;
+	my @versions;
+	my @dates;
+	my @sizes;
+	my @repos;
+	my @urls;
+	# NB this server also supports exact matching
+	my @lines = split /\n/, &fetchdoc($baseurl."/rpmfind?distrib=Mandriva&version=".$mandrivaVersion."&arch=&search=".$_[0]."&st=fuzzyname");
+	for (my $i = 70; $i < @lines; $i++) {
+		#TODO need to check for possible further pages (lists 20 per page)
+		if ($lines[$i] =~ /<p><a href\=\"http:\/\/sophie.zarb.org\/viewrpm\//) {
+			my @parts = split /href=\"|\">|mdv$mandrivaVersion/, $lines[$i];
+
+			# architecture test to avoid having too many listings
+			my @decisions = split /\./, $parts[3];
+			if ($decisions[1] =~ /86$/) {
+				push @urls,     $parts[1];
+				my ($name,$version) = &combos($parts[2]);
+				push @names,    $name;
+				push @versions, $version;
+				push @repos,	"";
+				push @sizes,	"";
+				push @dates,	"";
+			}
+		}
+	}
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Mandriva",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
 	return ();
 }

@@ -1,4 +1,4 @@
-.TH "whohas" "1" "0.22" "Jonathan Wiltshire" ""
+.TH "whohas" "1" "0.23" "Jonathan Wiltshire" ""
 .SH "NAME"
 .LP 
 whohas \- find packages in various distributions' repositories
@@ -14,6 +14,9 @@ whohas is a command line tool to query package lists from the Arch, Debian, Fedo
 \fB\-\-no\-threads\fR
 Don't use multiple threads to query package lists (will be much slower)
 .TP 
+\fB\-\-shallow\fR
+Limit to one call per server. Faster, but loses some information, typically package size and release date.
+.TP 
 \fB\-d Dist1[,Dist2[,Dist3 etc.]]\fR
 Queries only for packages for the listed distributions. Recognised values for Dist1, Dist2, etc. are "archlinux", "debian", "fedora", "fink", "freebsd", "gentoo", "macports", "netbsd", "openbsd", "opensuse", "slackware", "sourcemage", and "ubuntu".
 .TP 
@@ -24,7 +27,7 @@ Package name to query for
 whohas uses various files in ~/.whohas to cache package lists for some distributions.
 .SH "SEE ALSO"
 .LP 
-See \fIintro.txt.gz\fP or \fIintro.html\fP notes on using whohas.
+See \fIintro.txt\fP or \fIintro.html\fP notes on using whohas.
 .SH "AUTHORS"
 .LP 
 whohas is written and maintained by Philipp Wesche <phi1ipp@yahoo.com>

@@ -1,3 +1,24 @@
+0.23
+
+columns have been made wider to accommodate Debian's often excessively long version strings
+
+netbsd, debian and ubuntu now report sizes
+
+netbsd now reports dates
+
+"--shallow" suppresses these fetches, which can be desirable as they are time-consuming and exert server load
+
+all of these calls are threaded by default, can be disabled by "--no-threads" (same procedure as every year, James)
+
+fixed fedora size formatting bug
+
+now warns if distros specified are not recognised (thanks S Cotton for the bug report)
+
+now honours proxies (thanks Thibaut Varene for the bug report, Jonathan Wiltshire for pointing out the fix)
+
+Mandriva module added (thanks Sylvestre Ledru for pointing out the server)
+
+
 0.22
 
 netbsd module now queries pkgsrc.se, shows more details, is faster
