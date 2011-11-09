@@ -40,8 +40,6 @@ my @columns = (11,25,10,4,10,11);
 my $cols = 6;
 
 
-#TODO give warning if server reponse is empty for repository fetches!
-
 my @thrs;
 my $here = 0;
 if (@ARGV == 1) {
@@ -62,6 +60,7 @@ if (@ARGV == 1) {
 	$thrs[$here++] = threads->new(\&openbsd,     $ARGV[0]);
 	$thrs[$here++] = threads->new(\&slack,       $ARGV[0]);
 	$thrs[$here++] = threads->new(\&sm,          $ARGV[0]);
+	$thrs[$here++] = threads->new(\&ubuntu,      $ARGV[0]);
 	foreach (@thrs) {
 		$_->join;
 	}
@@ -69,6 +68,47 @@ if (@ARGV == 1) {
 	die "Too many parameters. Usage: $0 pkgname\n";
 }
 
+
+sub ubuntu {
+	my $base = "http://packages.ubuntu.com";
+	my $query = $base."/cgi-bin/search_packages.pl?keywords=$_[0]&searchon=names&subword=1&version=all&release=all";
+	my @lines = split /\n/, &fetchdoc($query);
+	my @names;
+	my @versions;
+	my @dates;
+	my @sizes;
+	my @repos;
+	my @urls;
+	my $now = 0;
+	for (my $i = 0; $i<@lines; $i++) {
+		if ($lines[$i] =~ /<h3>Package /) {
+			my @splits = split /<h3>Package |<\/h3>/, $lines[$i];
+			my $name = $splits[1];
+
+			for (my $a = ($i+1); $a < ($i+50); $a++) {
+				if ($lines[$a] =~ /<li><a href="/) {
+					my @parts = split /<\/a>/, $lines[$a];
+					my $repo = $parts[0];
+					$repo =~ s/^.*">//g;
+					@parts = split /<br>|ubuntu/, $lines[$a+1]; # cut at ubuntu cause it's too long anyway
+					push @versions, $parts[1];
+					push @names, $name;
+					push @repos, $repo;
+					push @sizes,    "";
+					push @dates,    "";
+					@parts = split /\"/, $lines[$a]; # cut at ubuntu cause it's too long anyway
+					push @urls, $base.$parts[1];
+				} elsif ($lines[$a] =~ /<h3>Package /) {
+					last;
+				}
+			}
+		}
+	}
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Ubuntu",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+	return ();
+}
 
 sub lp_net {
 	my @lines = split /\n/, &fetchdoc("http://www.linuxpackages.net/search_view.php?by=name&name=".$_[0]."&ver=10.1");
@@ -203,12 +243,13 @@ sub fink_get_details {
 	for (my $i = 60; $i < @lines; $i++) {
 		if ($lines[$i] =~ /10\./) {
 			my @parts = split /nowrap">|<\/div>/, $lines[$i];
-			unless ($parts[5] =~ /not present/) {
+			unless ($parts[5] =~ /not present/ or $parts[5] =~ /unsupported/) {
 				if ($parts[1] =~ /<br>/) {
 					push @repos, (split /<br>/, $parts[1])[0];
 				} else {
 					push @repos, $parts[1];
 				}
+				$parts[5] =~ s/\<\!\-\-.*\-\-\>//;
 				push @versions, $parts[5];
 			}
 		}
@@ -232,7 +273,7 @@ sub fedora_write {
 	my $baseurl = "ftp://download.fedora.redhat.com/pub/fedora/linux";
 	my $tempfile = "$file.tmp";
 	
-	if (-s $file && ($_[3]==0 || `date -Idate` =~ (split / /, `ls -l $file`)[6])) {
+	if (-s $file && ($_[3]==0 || `date +%Y-%m-%d` =~ (split / /, `ls -l $file`)[6])) {
 		# read in
 		open IN, $file;
 		chomp (my @inlines = <IN>);
@@ -250,7 +291,7 @@ sub fedora_write {
 		open IN, "$tempfile";
 		chomp (my @lines = <IN>);
 		close IN;
-		system "rm $tempfile";
+		system "rm -f $tempfile";
 		my $here = 0;
 		for (my $i = 0; $i < @lines; $i++) {
 			if ($lines[$i] =~ /^  200/) {
@@ -276,7 +317,7 @@ sub fedora_analyse {
 	$size =~ s/ bytes$//;
 	$size =~ s/,//g;
 	my $date = join " ", reverse ((split / +/, $_[0])[1..3]);
-	chomp ($date = `date -d \"$date\" -Idate`);
+	chomp ($date = `date +%Y-%m-%d -d \"$date\"`);
 	my $nad = (split /">|\.rpm/, $_[0])[2];
 	$nad =~ s/\.$arch//g;
 	my ($name,$version) = &combos($nad);
@@ -314,7 +355,7 @@ sub fedora_wget {
 	my @urls;
 	for (my $i = 0; $i < @ininames;$i++) {
 		my $mustmatch = $_[0];
-		if ($ininames[$i] =~ /$mustmatch/) {
+		if ($ininames[$i] =~ /$mustmatch/i) {
 			push @names,    $ininames[$i];
 			push @repos,    $inirepos[$i];
 			push @dates,    $inidates[$i];
@@ -323,6 +364,7 @@ sub fedora_wget {
 			push @urls, "";
 		}
 		# remove all that are the same
+		# i.e. first parsed wins
 		for (my $i = 0; $i < @names; $i++) {
 			for (my $a = $i + 1; $a < @names; $a++) {
 				if ($names[$i] eq $names[$a]) {
@@ -490,6 +532,8 @@ sub search_by_name { # versions, sizes, dates, repos, urls
 	}
 	return(\@names,\@versions,\@sizes,\@dates,\@repos,\@urls)
 }
+
+
 sub netbsd {
 	my $netbsdbase = "ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/";
 	my @ininames;
@@ -502,7 +546,7 @@ sub netbsd {
 	my $distroname = "NetBSD";
 	my $file = "$confdir/$distroname.list";
 	# if the list file exists and is recent, use its contents, otherwise download and parse a fresh copy
-	if (-s $file && `date -Idate` =~ (split / /, `ls -l $file`)[6]) {
+	if (-s $file && `date +%Y-%m-%d` =~ (split / /, `ls -l $file`)[6]) {
 		open IN, $file;
 		chomp (my @lines = <IN>);
 		for (my $i = 0; $i<@lines;$i++) {
@@ -543,7 +587,7 @@ sub netbsd {
 }
 
 sub openbsd {
-	my $rel = 3.7;
+	my $rel = 3.8;
 	my $baseurl = "http://www.openbsd.org/".$rel."_packages/";
 	my @ininames;
 	my @iniversions;
@@ -554,7 +598,7 @@ sub openbsd {
 	my $distroname = "OpenBSD";
 	my $file = "$confdir/$distroname\_$rel.list";
 	# if the list file exists and is recent, use its contents, otherwise download and parse a fresh copy
-	if (-s $file && `date -Idate` =~ (split / /, `ls -l $file`)[6]) {
+	if (-s $file && `date +%Y-%m-%d` =~ (split / /, `ls -l $file`)[6]) {
 		open IN, $file;
 		chomp (my @lines = <IN>);
 		for (my $i = 0; $i<@lines;$i++) {
@@ -596,7 +640,6 @@ sub openbsd {
 
 sub gentoo {
 	my $gentoobase = "http://packages.gentoo.org";
-	#TODO package status on given arch
 	my @names;
 	my @versions;
 	my @urls;
@@ -914,7 +957,7 @@ sub template_listing {
 	# prepare a list file
 	my $file = "$confdir/$distroname.list";
 	# if the list file exists and is recent, use its contents, otherwise download and parse a fresh copy
-	if (-s $file && `date -Idate` =~ (split / /, `ls -l $file`)[6]) {
+	if (-s $file && `date +%Y-%m-%d` =~ (split / /, `ls -l $file`)[6]) {
 		open IN, $file;
 		chomp (my @lines = <IN>);
 		for (my $i = 0; $i<@lines;$i++) {

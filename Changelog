@@ -1,3 +1,13 @@
+0.15
+
+added support for
+- Ubuntu
+
+Bumped OpenBSD default release to 3.8
+
+Fixed fink parsing.
+
+
 0.14
 
 added support for
