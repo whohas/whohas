@@ -58,8 +58,9 @@ if (@ARGV == 1) {
 		$thrs[$here++] = threads->new(\&freebsd,     $ARGV[0]);
 		#$thrs[$here++] = threads->new(\&gentoo,      $ARGV[0]); # disabled because package search interface seems to have been removed; I remember having problems with the Gentoo people before - shame!
 		$thrs[$here++] = threads->new(\&lp_net,      $ARGV[0]);
-	#	$thrs[$here++] = threads->new(\&netbsd,      $ARGV[0]);
+		$thrs[$here++] = threads->new(\&netbsd,      $ARGV[0]);
 		$thrs[$here++] = threads->new(\&openbsd,     $ARGV[0]);
+		$thrs[$here++] = threads->new(\&opensuse,    $ARGV[0]);
 		$thrs[$here++] = threads->new(\&slack,       $ARGV[0]);
 		$thrs[$here++] = threads->new(\&sm,          $ARGV[0]);
 		$thrs[$here++] = threads->new(\&ubuntu,      $ARGV[0]);
@@ -883,9 +884,9 @@ sub fetchdoc {
 			last;
 		}
 	}
-        my $end = @response - 1;
-        my $finaldoc = join ("\n", @response[14..$end]);
-        return ($finaldoc);
+    my $end = @response - 1;
+    my $finaldoc = join ("\n", @response[14..$end]);
+    return ($finaldoc);
 }
 
 sub pretty_print {
@@ -907,6 +908,66 @@ sub pretty_print {
 	print $colvals[@colvals-1]."\n"; #last column is unrestricted in length
 }
 
+sub prep_suse_repo {
+	if ($_[0] =~ /http\:\/\/download\.opensuse\.org/) {
+		if ($_[0] =~ /repositories/) {
+			if ($_[0] =~ /home\:/) {
+				$_[0] =~ s/^http\:\/\/download\.opensuse\.org\/repositories\/home\:\///;
+				$_[0] =~ s/\/openSUSE_11.0//;
+				$_[0] =~ s/\:\/.*$//g;
+				return $_[0];
+			} elsif ($_[0] =~ /http\:\/\/.*:\//) {
+				$_[0] =~ s/http\:\/\/download\.opensuse\.org\/repositories\///;
+				$_[0] =~ s/\:\/.*//;
+				return $_[0];
+			} else {
+				$_[0] =~ s/http\:\/\/download\.opensuse\.org\/repositories\///;
+				$_[0] =~ s/\/.*//;
+				return $_[0];
+			}
+		} elsif ($_[0] eq "http://download.opensuse.org/distribution/11.0/repo/oss/suse") {
+			return "suse/oss";
+		}
+	} elsif ($_[0] eq "http://packman.iu-bremen.de/suse/11.0") {
+		return "packman";
+	} else {
+		return $_[0];
+	}
+}
+
+sub opensuse {
+	my $opensusebase = "http://packages.opensuse-community.org";
+	my @names;
+	my @repos;
+	my @groups;
+	my @versions;
+	my @urls;
+	my @sizes;
+	my @dates;
+	my $distroname = "openSUSE";
+	my @lines = split /\n/, &fetchdoc($opensusebase."/index.jsp?searchTerm=".$_[0]."&distro=openSUSE_110");
+	my $temprepo = "";
+	for (my $i = 30; $i < @lines; $i++) {		if ($lines[$i] =~ /class\=\"repourl\"\>Results from/) {
+			$temprepo = &prep_suse_repo((split /<a href=\"|\<\/a\>|\"\>/, $lines[$i])[3]);
+		}
+		if ($lines[$i] =~ /class=\"result\"/) {
+			my @parts = split /\<a href\=\"\.|\">|\<\/a\>\<\/div\>\<div/, $lines[$i];
+			push @repos, $temprepo;
+			push @urls, $opensusebase.$parts[6];
+			my @splitty = split /\(|\)/, join "",@parts[7..8];
+			$splitty[0] =~ s/\<span class=\"highlight|\<\/span\>//g;
+			push @names,    $splitty[0];
+			push @versions, $splitty[1];
+#			print "@parts\n";
+			push @sizes,  "";
+			push @dates,  "";
+			push @groups, "";
+		}
+	}
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,$distroname,$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+}
 
 sub template_query {
 	my $query = "url";
@@ -998,6 +1059,3 @@ sub template_listing {
 	}
 	return ();
 }
-
-
-
