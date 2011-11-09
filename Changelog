@@ -1,3 +1,9 @@
+0.16
+
+Bumped or fixed several that weren't working.
+
+Disabled Gentoo because package search seems to have been removed from web.
+
 0.15
 
 added support for

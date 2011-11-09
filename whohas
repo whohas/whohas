@@ -23,6 +23,7 @@
 use strict;
 use sigtrap;
 
+#TODO Ubuntu, Slackware, DarwinPorts, Fink need to print output
 
 my $netbsdbase = "ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/";
 
@@ -46,23 +47,24 @@ if (@ARGV == 1) {
 	if ($ARGV[0] eq "whohasme") {
 		my $motto = "One Ring to rule them all, One Ring to find them,\nOne Ring to bring them all, One to unite them.\n";
 		exit;
-	}
-	$thrs[$here++] = threads->new(\&arch,        $ARGV[0]);
-	$thrs[$here++] = threads->new(\&aur,         $ARGV[0]);
-	$thrs[$here++] = threads->new(\&darwin,      $ARGV[0]);
-	$thrs[$here++] = threads->new(\&debian,      $ARGV[0]);
-	$thrs[$here++] = threads->new(\&fedora_wget, $ARGV[0]);
-	$thrs[$here++] = threads->new(\&fink,        $ARGV[0]);
-	$thrs[$here++] = threads->new(\&freebsd,     $ARGV[0]);
-	$thrs[$here++] = threads->new(\&gentoo,      $ARGV[0]);
-	$thrs[$here++] = threads->new(\&lp_net,      $ARGV[0]);
-	$thrs[$here++] = threads->new(\&netbsd,      $ARGV[0]);
-	$thrs[$here++] = threads->new(\&openbsd,     $ARGV[0]);
-	$thrs[$here++] = threads->new(\&slack,       $ARGV[0]);
-	$thrs[$here++] = threads->new(\&sm,          $ARGV[0]);
-	$thrs[$here++] = threads->new(\&ubuntu,      $ARGV[0]);
-	foreach (@thrs) {
-		$_->join;
+	} else {
+		$thrs[$here++] = threads->new(\&arch,        $ARGV[0]);
+		$thrs[$here++] = threads->new(\&aur,         $ARGV[0]);
+#		$thrs[$here++] = threads->new(\&darwin,      $ARGV[0]);
+		$thrs[$here++] = threads->new(\&debian,      $ARGV[0]);
+		$thrs[$here++] = threads->new(\&fedora_wget, $ARGV[0]);
+#		$thrs[$here++] = threads->new(\&fink,        $ARGV[0]);
+		$thrs[$here++] = threads->new(\&freebsd,     $ARGV[0]);
+	#	$thrs[$here++] = threads->new(\&gentoo,      $ARGV[0]); # disabled because package search interface seems to have been removed; I remember having problems with the Gentoo people before - shame!
+		$thrs[$here++] = threads->new(\&lp_net,      $ARGV[0]);
+		$thrs[$here++] = threads->new(\&netbsd,      $ARGV[0]);
+		$thrs[$here++] = threads->new(\&openbsd,     $ARGV[0]);
+#		$thrs[$here++] = threads->new(\&slack,       $ARGV[0]);
+		$thrs[$here++] = threads->new(\&sm,          $ARGV[0]);
+#		$thrs[$here++] = threads->new(\&ubuntu,      $ARGV[0]);
+		foreach (@thrs) {
+			$_->join;
+		}
 	}
 } else {
 	die "Too many parameters. Usage: $0 pkgname\n";
@@ -111,7 +113,8 @@ sub ubuntu {
 }
 
 sub lp_net {
-	my @lines = split /\n/, &fetchdoc("http://www.linuxpackages.net/search_view.php?by=name&name=".$_[0]."&ver=10.1");
+	my $version = "12.1";
+	my @lines = split /\n/, &fetchdoc("http://www.linuxpackages.net/search_view.php?by=name&name=".$_[0]."&ver=".$version);
 	my @names;
 	my @versions;
 	my @dates;
@@ -166,14 +169,14 @@ sub lp_net_details {
 }
 
 sub darwin {
-	my $baseurl = "http://darwinports.opendarwin.org";
+	my $baseurl = "http://darwinports.com";
 	my @names;
 	my @versions;
 	my @dates;
 	my @sizes;
 	my @repos;
 	my @urls;
-	my @lines = split /\n/, &fetchdoc($baseurl."/ports/?by=name&substr=".$_[0]."&Search=");
+	my @lines = split /\n/, &fetchdoc($baseurl."/?q=".$_[0]);
 	for (my $i = 70; $i < @lines; $i++) {
 		if ($lines[$i] =~ /<dt><b>/) {
 			my @parts = split /href="|">|<\/a><\/b> |<\/dt/, $lines[$i];
@@ -587,7 +590,7 @@ sub netbsd {
 }
 
 sub openbsd {
-	my $rel = 3.8;
+	my $rel = 4.4;
 	my $baseurl = "http://www.openbsd.org/".$rel."_packages/";
 	my @ininames;
 	my @iniversions;
@@ -673,7 +676,7 @@ sub gentoo {
 }
 
 sub slack {
-	my $slackbase  = "http://slackware.it/en/pb/";
+	my $slackbase  = "http://packages.slackware.it";
 	my @repos;
 	my @names;
 	my @versions;
@@ -681,7 +684,7 @@ sub slack {
 	my @combos;
 	my @sizes;
 	my @dates;
-	my @lines = split /\n|<br>|<\/td>/, &fetchdoc($slackbase."searchpkg.php?v=current&string=".$_[0]);
+	my @lines = split /\n|<br>|<\/td>/, &fetchdoc($slackbase."/search.php?v=current&t=1&q=firefox".$_[0]);
 	my $repo;
 	my $now = 0;
 	for (my $i = 0; $i < @lines; $i++) {
@@ -790,14 +793,7 @@ sub aur {
 
 sub arch {
 	my $archbase   = "http://www.archlinux.org";
-	my $stop;
-	my @lines = split /\n/, &fetchdoc($archbase."/packages.php?pp=1000&s_keyword=".$_[0]); # 1000 should be enough
-	for (my $i = @lines - 1; $i > 0; $i--) {   # $stop was 865 when I wrote this, total file was only 903
-		if ($lines[$i] eq "\t\t</tr></table>\t\t</td>") {
-			$stop = $i;
-			last;
-		}
-	}
+	my @lines = split /\n/, &fetchdoc($archbase."/packages/?arch=i686&repo=&q=".$_[0]."&last_update=&limit=all");
 
 	my @repos;
 	my @names;
@@ -805,23 +801,26 @@ sub arch {
 	my @dates;
 	my @urls;
 	my @sizes;
-	my $indicator = 0;
-	for (my $i = 380; $i < $stop; $i++) {  # 380 is a compromise between safety and efficiency
-		if ($lines[$i] =~ /<td class="data/) {
-			$indicator++;
-			if ($indicator == 1) {
-				push @repos,    &arch_site_get_cont($lines[$i]);
-			} elsif ($indicator == 3) {
-				push @names,    &arch_site_get_cont($lines[$i]);
-				push @urls,     $archbase.&arch_site_get_url ($lines[$i]);
-			} elsif ($indicator == 4) {
-				push @versions, &arch_site_get_cont($lines[$i]);
-			} elsif ($indicator == 6) {
-				push @dates,    &arch_site_get_cont($lines[$i]);
-				push @sizes, "";
-				$indicator = 0;
+	for (my $i = 0; $i < @lines; $i++) {
+		if ($lines[$i] =~ /\<tr class\=\"pkgr/) {
+			for (my $a = 2; $a < 8;$a++) {
+				my $temp = $lines[$a+$i];
+				$temp =~ s/.*\<td\>|\<\/td\>//g;
+				if ($a == 2) {
+					push @repos,$temp;
+				} elsif ($a == 3) {
+					push @urls, $archbase.&arch_site_get_url ($lines[$i+$a]);
+					push @names, &arch_site_ger_cont($lines[$i+$a]);
+				} elsif ($a == 5) {
+					$temp =~ s/<span style=\".*\">|<\/span>//g;
+					push @versions, $temp;
+				} elsif ($a == 9) {
+					push @dates,    $temp;
+				}
 			}
 			# 2 is package group, 5 is description
+			push @sizes, "";
+			$i += 7;
 		}
 	}
 	for (my $i = 0; $i < @repos; $i++) {
@@ -830,24 +829,31 @@ sub arch {
 	return ();
 }
 
-
-
-
-sub arch_site_get_cont {
-	my @parts = split />/, $_[0];
-	for (my $i = 0; $i < @parts; $i++) {
-		if ($parts[$i] =~ /^[A-Za-z0-9]/) {
-			return (split /</, $parts[$i])[0];
-		}
-	}
+sub arch_site_get_url {
+	my $temp = $_[0];
+	$temp =~ s/.*\<a href=\"|\">.*//g;
+	return $temp;
 }
 
-sub arch_site_get_url {
-	return ((split /a href='|'>/, $_[0])[1]);
+sub arch_site_get_cont {
+ 	my @parts = split />/, $_[0];
+ 	for (my $i = 0; $i < @parts; $i++) {
+ 		if ($parts[$i] =~ /^[A-Za-z0-9]/) {
+ 			return (split /</, $parts[$i])[0];
+ 		}
+ 	}
+}
+
+sub arch_site_ger_cont {
+	my $temp = $_[0];
+	$temp =~ s/.*\"\>|\<\/a.*//g;
+	return $temp;
 }
 
 sub aur_site_get_url {
-	return ((split /a href='|&O=/, $_[0])[1]);
+	my $string = (split /a href='|&O=/, $_[0])[1];
+	$string =~ s/\'\>.*//;
+	return $string;
 }
 
 
