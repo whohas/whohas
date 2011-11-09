@@ -1,6 +1,17 @@
+0.13
+
+fixed Gentoo problem
+
+fixed Slackware problem
+
+made Fedora sizes human-readable
+
+give only most current Gentoo version
+
+
 0.12
 
-changed string "Src Mage" to "SGML"
+changed string "Src Mage" to "SMGL"
 
 added support for
 - Fedora

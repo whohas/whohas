@@ -26,7 +26,6 @@ use sigtrap;
 my $archbase   = "http://www.archlinux.org";
 my $aurbase    = "http://aur.archlinux.org";
 my $debianbase = "http://packages.debian.org";
-my $slackbase  = "http://slackware.it/en/pb";
 my $gentoobase = "http://packages.gentoo.org";
 my $fedorabase = "http://download.fedora.redhat.com/pub/fedora/linux";
 my $netbsdbase = "ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/";
@@ -65,6 +64,7 @@ if (@ARGV == 1) {
 }
 
 
+
 sub fedora_write {
 	my $file = $_[1];
 	my $arch = $_[2];
@@ -77,7 +77,7 @@ sub fedora_write {
 	my $baseurl = "ftp://download.fedora.redhat.com/pub/fedora/linux";
 	my $tempfile = "$file.tmp";
 	
-	if (-s $file && ($_[0]==0 || ($_[3]==1 && `date -Idate` =~ (split / /, `ls -l $file`)[6]))) {
+	if (-s $file && ($_[3]==0 || `date -Idate` =~ (split / /, `ls -l $file`)[6])) {
 		# read in
 		open IN, $file;
 		chomp (my @inlines = <IN>);
@@ -119,6 +119,7 @@ sub fedora_analyse {
 	my $arch = $_[1];
 	my $size = (split /\(|\)/, $_[0])[1];
 	$size =~ s/ bytes$//;
+	$size =~ s/,//g;
 	my $date = join " ", reverse ((split / +/, $_[0])[1..3]);
 	chomp ($date = `date -d \"$date\" -Idate`);
 	my $nad = (split /">|\.rpm/, $_[0])[2];
@@ -181,9 +182,52 @@ sub fedora_wget {
 		}
 	}
 	for (my $i = 0; $i < @repos; $i++) {
-		&pretty_print($cols,@columns,"Fedora",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+		&pretty_print($cols,@columns,"Fedora",$names[$i],$versions[$i],
+			&size_trim($sizes[$i]),
+		$dates[$i],$repos[$i],$urls[$i]);
 	}
 	return ();
+}
+
+sub size_trim {
+	# give at least two significant figures; if a 10^3 edge is encountered, put a dot
+	my $leave =  length($_[0]) % 3;
+	my $threes = (length($_[0]) - $leave) / 3;
+	if ($leave == 0) {
+		$leave = 3;
+		$threes--;
+	}
+	
+	my @parts = split //, $_[0];
+	my $retval = join "", @parts[0..($leave-1)];
+	if (length($retval)==1 && $threes > 0) {
+		# add one more significant figure
+		my $add_sf = $parts[$leave];
+		if ($parts[$leave+1] > 4) {
+			# rounding
+			$add_sf++;
+			if ($add_sf == 10) {
+				$add_sf = 0;
+				$retval++;
+				if ($retval == 10) {
+					return(&size_trim($retval*(1000**$threes)));
+				}
+			}
+		}
+		$retval .= ".$add_sf";
+	} elsif (defined($parts[$leave]) && $parts[$leave] > 4) { # instead of defined(...), ($threes > 0) is also possible
+		my $before = length($retval);
+		# rounding
+		$retval++;
+		if (length($retval) > $before) {
+			return(&size_trim($retval*(1000**$threes)));
+		}
+	}
+	my @suffixes = ("k","M","G");
+	if ($threes > 0) {
+		$retval .= $suffixes[($threes-1)];
+	}
+	return $retval;
 }
 
 
@@ -403,7 +447,7 @@ sub gentoo {
 	my $name;
 	my @repos;
 	my @sizes;
-	for (my $i = 400; $i < @lines; $i++) { # 400 is a speed compromise
+	for (my $i = 200; $i < @lines; $i++) { # starting value is a speed compromise
 		if ($lines[$i] eq '<table class="ebuild">') {
 			$name = (split /fields">|<\/td/, $lines[$i+1])[1];
 		} elsif ($lines[$i] =~ /th class="releases/) {
@@ -417,13 +461,18 @@ sub gentoo {
 			push @sizes, "";
 		}
 	}
+	my %more_recent;
 	for (my $i = 0; $i < @repos; $i++) {
-		&pretty_print($cols,@columns,"Gentoo",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+		unless (defined($more_recent{$names[$i]})) {
+			&pretty_print($cols,@columns,"Gentoo",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+			$more_recent{$names[$i]} = 1;
+		}
 	}
 	return ();
 }
 
 sub slack {
+	my $slackbase  = "http://slackware.it/en/pb";
 	my @repos;
 	my @names;
 	my @versions;
@@ -441,7 +490,7 @@ sub slack {
 			push @repos, $repo;
 			my @parts = split /a href="|"><b>|<\/b>/, $lines[$i];
 			$parts[4] =~ s/\/[a-z0-9-]+\///; # dropping some package group information here, could be used...
-			$names[$now],$versions[$now] = &combos($parts[4]);
+			($names[$now],$versions[$now]) = &combos($parts[4]);
 			$now++;
 			push @urls, $parts[3];
 			push @dates, "";
@@ -622,7 +671,7 @@ sub fetchdoc {
 		} elsif (@firstline > 3) {
 			$restest = $firstline[0];
 		}
-		if ($restest == 200 || $response[0] =~ /200 OK/) {
+		if ($restest == 200 || $response[0] =~ /200 OK/) { #NB the matching expression added specifically for NetBSD package page!
 		# server response 200 is a stringent criterion, but should work
 			last;
 		} elsif ($count > 4) {   # loop termination condition
