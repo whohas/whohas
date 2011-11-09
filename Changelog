@@ -1,3 +1,14 @@
+0.24
+
+Cygwin module added
+
+other modules updated
+
+repository column widened to accommodate huge openSUSE repo strings
+
+other minor changes and fixes
+
+
 0.23
 
 columns have been made wider to accommodate Debian's often excessively long version strings

@@ -7,7 +7,7 @@ whohas \- find packages in various distributions' repositories
 whohas [\fI\-\-no\-threads\fP] [\fI\-d Dist1[,Dist2[,Dist3 etc.]]\fP] \fIpkgname\fP
 .SH "DESCRIPTION"
 .LP 
-whohas is a command line tool to query package lists from the Arch, Debian, Fedora, Gentoo, openSUSE, Slackware (and linuxpackages.net), Source Mage, Ubuntu, FreeBSD, NetBSD, OpenBSD, Fink and MacPorts distributions.
+whohas is a command line tool to query package lists from the Arch, Debian, Fedora, Gentoo, Mandriva, openSUSE, Slackware (and linuxpackages.net), Source Mage, Ubuntu, FreeBSD, NetBSD, OpenBSD, Fink, MacPorts and Cygwin distributions.
 .SH "OPTIONS"
 .LP 
 .TP 
@@ -18,7 +18,7 @@ Don't use multiple threads to query package lists (will be much slower)
 Limit to one call per server. Faster, but loses some information, typically package size and release date.
 .TP 
 \fB\-d Dist1[,Dist2[,Dist3 etc.]]\fR
-Queries only for packages for the listed distributions. Recognised values for Dist1, Dist2, etc. are "archlinux", "debian", "fedora", "fink", "freebsd", "gentoo", "macports", "netbsd", "openbsd", "opensuse", "slackware", "sourcemage", and "ubuntu".
+Queries only for packages for the listed distributions. Recognised values for Dist1, Dist2, etc. are "archlinux", "cygwin", "debian", "fedora", "fink", "freebsd", "gentoo", "mandriva", "macports", "netbsd", "openbsd", "opensuse", "slackware", "sourcemage", and "ubuntu".
 .TP 
 \fBpkgname\fR
 Package name to query for
