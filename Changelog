@@ -1,3 +1,15 @@
+0.14
+
+added support for
+- Fink
+- DarwinPorts
+- linuxpackages.net
+
+Fix Debian version number bug.
+
+Changed size of first column to fit strings "Source Mage" and "DarwinPorts".
+
+
 0.13
 
 fixed Gentoo problem

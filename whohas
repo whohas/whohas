@@ -23,11 +23,7 @@
 use strict;
 use sigtrap;
 
-my $archbase   = "http://www.archlinux.org";
-my $aurbase    = "http://aur.archlinux.org";
-my $debianbase = "http://packages.debian.org";
-my $gentoobase = "http://packages.gentoo.org";
-my $fedorabase = "http://download.fedora.redhat.com/pub/fedora/linux";
+
 my $netbsdbase = "ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/";
 
 
@@ -40,18 +36,28 @@ unless (-d $confdir) {
 	mkdir ($confdir, 0777);
 }
 
-my @columns = (9,25,10,4,10,11);
+my @columns = (11,25,10,4,10,11);
 my $cols = 6;
+
+
+#TODO give warning if server reponse is empty for repository fetches!
 
 my @thrs;
 my $here = 0;
 if (@ARGV == 1) {
+	if ($ARGV[0] eq "whohasme") {
+		my $motto = "One Ring to rule them all, One Ring to find them,\nOne Ring to bring them all, One to unite them.\n";
+		exit;
+	}
 	$thrs[$here++] = threads->new(\&arch,        $ARGV[0]);
 	$thrs[$here++] = threads->new(\&aur,         $ARGV[0]);
+	$thrs[$here++] = threads->new(\&darwin,      $ARGV[0]);
 	$thrs[$here++] = threads->new(\&debian,      $ARGV[0]);
 	$thrs[$here++] = threads->new(\&fedora_wget, $ARGV[0]);
+	$thrs[$here++] = threads->new(\&fink,        $ARGV[0]);
 	$thrs[$here++] = threads->new(\&freebsd,     $ARGV[0]);
 	$thrs[$here++] = threads->new(\&gentoo,      $ARGV[0]);
+	$thrs[$here++] = threads->new(\&lp_net,      $ARGV[0]);
 	$thrs[$here++] = threads->new(\&netbsd,      $ARGV[0]);
 	$thrs[$here++] = threads->new(\&openbsd,     $ARGV[0]);
 	$thrs[$here++] = threads->new(\&slack,       $ARGV[0]);
@@ -63,6 +69,155 @@ if (@ARGV == 1) {
 	die "Too many parameters. Usage: $0 pkgname\n";
 }
 
+
+sub lp_net {
+	my @lines = split /\n/, &fetchdoc("http://www.linuxpackages.net/search_view.php?by=name&name=".$_[0]."&ver=10.1");
+	my @names;
+	my @versions;
+	my @dates;
+	my @sizes;
+	my @repos;
+	my @urls;
+	for (my $i = 0; $i < @lines; $i++) {
+		if ($lines[$i] =~ /<tr bgcolor="#ffffff"><td>/) {
+			push @names,    (split /">|<\/a/,   $lines[$i+1])[1];
+			push @versions, (split /<\/td/,     $lines[$i+3])[0];
+			push @repos,    (split /<\/td/,     $lines[$i+5])[0];
+			my $url = (split /href="|">/, $lines[$i+8])[1];
+			my @ret = &lp_net_details($url);
+			push @urls, $url;
+			push @sizes, $ret[0];
+			push @dates, $ret[1];
+			$i += 10;
+		}
+	}
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"lp.net",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+	return ();
+}
+
+sub lp_net_details {
+	my $size;
+	my $date;
+	my $findd = 0;
+	my $finds = 0;
+	my @lines = split /\n/, &fetchdoc($_[0]);
+	for (my $i = 340; $i < @lines;$i++) {
+		if ($lines[$i] =~ /Date :/) {
+			if ($findd == 1) {
+				die "encountered several dates for package\n";
+			} else {
+				$findd = 1;
+			}
+			$date = join "", (split //, (split /<b>|<\/b>/, $lines[$i])[1])[0..9];
+		}
+		if ($lines[$i] =~ /Filesize :/) {
+			if ($finds == 1) {
+				die "encountered several sizes for package\n";
+			} else {
+				$finds = 1;
+			}
+			my $presize = (split / /, (split /<b>|<\/b>/, $lines[$i])[1])[0];
+			$size = &size_trim($presize*1000);
+		}
+	}
+	return ($size,$date);
+}
+
+sub darwin {
+	my $baseurl = "http://darwinports.opendarwin.org";
+	my @names;
+	my @versions;
+	my @dates;
+	my @sizes;
+	my @repos;
+	my @urls;
+	my @lines = split /\n/, &fetchdoc($baseurl."/ports/?by=name&substr=".$_[0]."&Search=");
+	for (my $i = 70; $i < @lines; $i++) {
+		if ($lines[$i] =~ /<dt><b>/) {
+			my @parts = split /href="|">|<\/a><\/b> |<\/dt/, $lines[$i];
+			push @urls,     $parts[1];
+			push @names,    $parts[2];
+			push @versions, $parts[3];
+			push @repos, "";
+			push @sizes, "";
+			push @dates, "";
+		}
+	}
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"DarwinPorts",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+	return ();
+}
+
+
+sub fink {
+	my $baseurl = "http://fink.sourceforge.net/pdb/";
+	my @names;
+	my @versions;
+	my @dates;
+	my @sizes;
+	my @repos;
+	my @urls;
+	my @lines = split /\n/, &fetchdoc($baseurl."search.php?summary=".$_[0]);
+	for (my $i = 60; $i < @lines; $i++) {
+		if ($lines[$i] =~ /<li><a /) {
+			my $line;
+			if ($lines[$i] !~ /^<li><a /) {
+				if ($lines[$i] =~ /<ul>/) {
+					$line = (split /<ul>/, $lines[$i])[1];
+				} else {
+					die "unexpected result - please contact maintainer!\n";
+				}
+			} else {
+				$line = $lines[$i];
+			}
+			my @parts = split /href=\"|\">|<\/a>/, $line;
+			my $url  = $baseurl.$parts[1];
+			my $name = $parts[2];
+			my ($p1,$p2) = &fink_get_details($url);
+			foreach (@$p1) {
+				push @names, $name;
+				push @urls, $url;
+			}
+			push @versions, @$p1;
+			push @repos, @$p2;
+			push @sizes, "";
+			push @dates, "";
+		}
+		if ($lines[$i] eq '</ul>') {
+			last;
+		}
+	}
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Fink",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+	return ();
+}
+
+sub fink_get_details {
+	my @repos;
+	my @versions;
+	my @lines = split /\n/, &fetchdoc($_[0]);
+	for (my $i = 60; $i < @lines; $i++) {
+		if ($lines[$i] =~ /10\./) {
+			my @parts = split /nowrap">|<\/div>/, $lines[$i];
+			unless ($parts[5] =~ /not present/) {
+				if ($parts[1] =~ /<br>/) {
+					push @repos, (split /<br>/, $parts[1])[0];
+				} else {
+					push @repos, $parts[1];
+				}
+				push @versions, $parts[5];
+			}
+		}
+		if ($lines[$i] eq '</table>') {
+			last;
+		}
+	}
+	return (\@versions,\@repos);
+}
 
 
 sub fedora_write {
@@ -140,7 +295,7 @@ sub fedora_wget {
 	for (my $i = 4; $i <= $current_release; $i++) { # just the one release for now
 		my @fed_repos = ("core","updates","extras");
 		my @fed_updates = (0,1,1); #whether to ask for an update or not
-		my @fed_urls = ("/core/$i/i386/os/Fedora/RPMS/","/core/updates/$i/$arch/","/extras/$i/$arch/");
+		my @fed_urls = ("/core/$i/$arch/os/Fedora/RPMS/","/core/updates/$i/$arch/","/extras/$i/$arch/");
 		for (my $a = 0; $a < @fed_repos; $a++) {
 			my $file = "$confdir/$distroname.$i.".$fed_repos[$a].".list";
 			my ($p1,$p2,$p3,$p4,$p5) = &fedora_write($fed_urls[$a],$file,$arch,$fed_updates[$a],$fed_repos[$a]);
@@ -303,7 +458,7 @@ sub sm {
 	my @repos    = @$p5;
 	my @urls     = @$p6;
 	for (my $i = 0; $i < @repos; $i++) {
-		&pretty_print($cols,@columns,"SMGL",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+		&pretty_print($cols,@columns,"Source Mage",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
 	return ();
 }
@@ -336,6 +491,7 @@ sub search_by_name { # versions, sizes, dates, repos, urls
 	return(\@names,\@versions,\@sizes,\@dates,\@repos,\@urls)
 }
 sub netbsd {
+	my $netbsdbase = "ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/";
 	my @ininames;
 	my @iniversions;
 	my @iniurls;
@@ -439,6 +595,8 @@ sub openbsd {
 }
 
 sub gentoo {
+	my $gentoobase = "http://packages.gentoo.org";
+	#TODO package status on given arch
 	my @names;
 	my @versions;
 	my @urls;
@@ -472,7 +630,7 @@ sub gentoo {
 }
 
 sub slack {
-	my $slackbase  = "http://slackware.it/en/pb";
+	my $slackbase  = "http://slackware.it/en/pb/";
 	my @repos;
 	my @names;
 	my @versions;
@@ -480,7 +638,7 @@ sub slack {
 	my @combos;
 	my @sizes;
 	my @dates;
-	my @lines = split /\n|<br>|<\/td>/, &fetchdoc($slackbase."/searchpkg.php?v=current&string=".$_[0]);
+	my @lines = split /\n|<br>|<\/td>/, &fetchdoc($slackbase."searchpkg.php?v=current&string=".$_[0]);
 	my $repo;
 	my $now = 0;
 	for (my $i = 0; $i < @lines; $i++) {
@@ -492,7 +650,8 @@ sub slack {
 			$parts[4] =~ s/\/[a-z0-9-]+\///; # dropping some package group information here, could be used...
 			($names[$now],$versions[$now]) = &combos($parts[4]);
 			$now++;
-			push @urls, $parts[3];
+			my @arty = split /\"\>/, $parts[1];
+			push @urls, $slackbase.$arty[0];
 			push @dates, "";
 			push @sizes, "";
 		}
@@ -504,6 +663,7 @@ sub slack {
 }
 
 sub debian {
+	my $debianbase = "http://packages.debian.org";
 	my @names;
 	my @repos;
 	my @versions;
@@ -527,7 +687,7 @@ sub debian {
 					$have_version = 0;
 				} elsif ($lines[$a] =~ /^<br>/) {
 					if ($have_version == 0) {
-						my @parts = split />|:/, $lines[$a];
+						my @parts = split />|: /, $lines[$a];
 						push @versions, $parts[1];
 					}
 					$have_version = 1;
@@ -545,6 +705,7 @@ sub debian {
 }
 
 sub aur {
+	my $aurbase    = "http://aur.archlinux.org";
 	my $stop;
 	my @lines = split /\n/, &fetchdoc($aurbase."/packages.php?PP=1000&K=".$_[0]); # 1000 should be enough
 
@@ -585,6 +746,7 @@ sub aur {
 }
 
 sub arch {
+	my $archbase   = "http://www.archlinux.org";
 	my $stop;
 	my @lines = split /\n/, &fetchdoc($archbase."/packages.php?pp=1000&s_keyword=".$_[0]); # 1000 should be enough
 	for (my $i = @lines - 1; $i > 0; $i--) {   # $stop was 865 when I wrote this, total file was only 903
