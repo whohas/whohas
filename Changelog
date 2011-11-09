@@ -1,3 +1,16 @@
+0.21
+
+Added back Gentoo
+
+Added back Fedora
+
+Changed combos subroutine after profiling showed it to be slow
+
+Including Debian "testing" repositories since we've been including Sourcemage's "test" for a while
+
+Officially no more dependency on wget (for now, at least)
+
+
 0.20
 
 Distributions can now be specified on commandline, using the "-d Distribution1,Distribution2" option; the recognised strings are archlinux, debian, fink, freebsd, macports, netbsd, openbsd, opensuse, slackware, sourcemage, ubuntu
