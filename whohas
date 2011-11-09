@@ -68,8 +68,24 @@ if (@ARGV == 1) {
 			$_->join;
 		}
 	}
+} elsif ($ARGV[0] eq "--no-threads") {
+	&arch(		$ARGV[1]);
+	&aur(		$ARGV[1]);
+	&darwin(	$ARGV[1]);
+	&debian(	$ARGV[1]);
+#	&fedora_wget(	$ARGV[1]);
+	&fink(		$ARGV[1]);
+	&freebsd(	$ARGV[1]);
+	#&gentoo(	$ARGV[1]); # disabled because package search interface seems to have been removed; I remember having problems with the Gentoo people before - shame!
+	&lp_net(	$ARGV[1]);
+	&netbsd(	$ARGV[1]);
+	&openbsd(	$ARGV[1]);
+	&opensuse(	$ARGV[1]);
+	&slack(		$ARGV[1]);
+	&sm(		$ARGV[1]);
+	&ubuntu(	$ARGV[1]);
 } else {
-	die "Too many parameters. Usage: $0 pkgname\n";
+	die "Too many parameters. Usage: $0 [--no-threads] pkgname\n";
 }
 
 
@@ -187,7 +203,7 @@ sub darwin {
 		}
 	}
 	for (my $i = 0; $i < @repos; $i++) {
-		&pretty_print($cols,@columns,"DarwinPorts",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+		&pretty_print($cols,@columns,"MacPorts",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
 	return ();
 }
