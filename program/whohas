@@ -20,20 +20,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-#use strict;
-#use sigtrap;
+use strict;
+use sigtrap;
 
-#TODO fedora is using unsafe search, compare with subroutine search_by_name; basically, you might suffer an accidental match to something in the html code
-#TODO get more info about slackware, debian and ubuntu packages from subsequent links
+#TODO get more info about slackware, debian, ubuntu and netbsd packages from subsequent links
 #TODO architecture tests for those that support several
 #TODO some version numbers missing in Debian
 #TODO Gentoo: only report two most recent for each package?
-#TODO make more use of the conf directory, e.g. for Fedora, Sourcemage, so we download those indexes only sparingly, and save ourselves processing time; MAKE SURE YOU WRITE THE PROCESSED RESULTS FOR EASY PARSING NEXT TIME
+#TODO make more use of the conf directory, e.g. for Fedora, Sourcemage, so we download those indexes only sparingly, and save ourselves processing time; MAKE SURE YOU WRITE THE PROCESSED RESULTS FOR EASY PARSING ON THE NEXT RUN
 #TODO add option to suppress caching and to force a reload (newly fetched file written to cache)
-#TODO focus code improvements on netbsd and openbsd - these are slow
-
-my $netbsdbase = "ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/";
-
+#TODO ubuntu: allow two releases: the long term supported and the most recent
+#TODO fedora is using unsafe search, compare with subroutine search_by_name; basically, you might suffer an accidental match to something in the html code
 
 use Env qw(HOME);
 use threads;
@@ -67,47 +64,34 @@ my $here = 0;
 if (@ARGV > 1) {
 	for (my $i = 0; $i < @ARGV; $i++) {
 		if ($ARGV[$i] eq "-d") {
-			$arch_bool			= 0;
+			$arch_bool		= 0;
 			$debian_bool		= 0;
-			$fink_bool			= 0;
+			$fink_bool		= 0;
 			$freebsd_bool		= 0;
 			$macports_bool		= 0;
 			$netbsd_bool		= 0;
 			$openbsd_bool		= 0;
 			$opensuse_bool		= 0;
-			$slack_bool			= 0;
+			$slack_bool		= 0;
 			$sourcemage_bool	= 0;
 			$ubuntu_bool		= 0;
 			$gentoo_bool 		= 0;
 			$fedora_bool 		= 0;
 			my @parts = split /,/, $ARGV[$i+1];
 			for (my $a = 0; $a < @parts; $a++) {
-				if (		$parts[$a] =~ /archlinux/i) {
-					$arch_bool			= 1;
-				} elsif (	$parts[$a] =~ /debian/i) {
-					$debian_bool		= 1;
-				} elsif (	$parts[$a] =~ /fink/i) {
-					$fink_bool			= 1;
-				} elsif (	$parts[$a] =~ /freebsd/i) {
-					$freebsd_bool		= 1;
-				} elsif (	$parts[$a] =~ /macports/i) {
-					$macports_bool		= 1;
-				} elsif (	$parts[$a] =~ /netbsd/i) {
-					$netbsd_bool		= 1;
-				} elsif (	$parts[$a] =~ /openbsd/i) {
-					$openbsd_bool		= 1;
-				} elsif (	$parts[$a] =~ /opensuse/i) {
-					$opensuse_bool		= 1;
-				} elsif (	$parts[$a] =~ /slackware/i) {
-					$slack_bool			= 1;
-				} elsif (	$parts[$a] =~ /sourcemage/i) {
-					$sourcemage_bool	= 1;
-				} elsif (	$parts[$a] =~ /ubuntu/i) {
-					$ubuntu_bool		= 1;
-				} elsif (	$parts[$a] =~ /gentoo/i) {
-					$gentoo_bool		= 1;
-				} elsif (	$parts[$a] =~ /fedora/i) {
-					$fedora_bool		= 1;
+				if (		$parts[$a] =~ /archlinux/i) {	$arch_bool		= 1;
+				} elsif (	$parts[$a] =~ /debian/i) {	$debian_bool		= 1;
+				} elsif (	$parts[$a] =~ /fink/i) {	$fink_bool		= 1;
+				} elsif (	$parts[$a] =~ /freebsd/i) {	$freebsd_bool		= 1;
+				} elsif (	$parts[$a] =~ /macports/i) {	$macports_bool		= 1;
+				} elsif (	$parts[$a] =~ /netbsd/i) {	$netbsd_bool		= 1;
+				} elsif (	$parts[$a] =~ /openbsd/i) {	$openbsd_bool		= 1;
+				} elsif (	$parts[$a] =~ /opensuse/i) {	$opensuse_bool		= 1;
+				} elsif (	$parts[$a] =~ /slackware/i) {	$slack_bool		= 1;
+				} elsif (	$parts[$a] =~ /sourcemage/i) {	$sourcemage_bool	= 1;
+				} elsif (	$parts[$a] =~ /ubuntu/i) {	$ubuntu_bool		= 1;
+				} elsif (	$parts[$a] =~ /gentoo/i) {	$gentoo_bool		= 1;
+				} elsif (	$parts[$a] =~ /fedora/i) {	$fedora_bool		= 1;
 				}
 			}
 			splice @ARGV, $i, 2;
@@ -118,7 +102,7 @@ if (@ARGV > 1) {
 
 if (@ARGV == 1) {
 	if ($ARGV[0] eq "whohasme") {
-		my $motto = "You have yourself - that ought to be enough!\n";
+		my $motto = "Congratulations. You discovered an Easter egg. Maybe you can send a quick email to phi1ipp\@yahoo.com to say hello and tell the developer what you think of the software.\n";
 		exit;
 	} else {
 		if ($arch_bool == 1) {
@@ -138,7 +122,8 @@ if (@ARGV == 1) {
 			$thrs[$here++] = threads->new(\&macports,	$ARGV[0]);
 		}
 		if ($netbsd_bool == 1) {
-			$thrs[$here++] = threads->new(\&netbsd,		$ARGV[0]);
+#			$thrs[$here++] = threads->new(\&netbsd,		$ARGV[0]); #this worked, but was slow
+			$thrs[$here++] = threads->new(\&netbsd_pkgsrc,	$ARGV[0]);
 		}
 		if ($openbsd_bool == 1) {
 			$thrs[$here++] = threads->new(\&openbsd,	$ARGV[0]);
@@ -174,7 +159,7 @@ if (@ARGV == 1) {
 	if ($debian_bool == 1) {
 		&debian(	$ARGV[1]);
 	}
-	if ($ubuntu_bool == 1) {
+	if ($fedora_bool == 1) {
 		&fedora(	$ARGV[1]);
 	}
 	if ($fink_bool == 1) {
@@ -190,7 +175,8 @@ if (@ARGV == 1) {
 		&macports(	$ARGV[1]);
 	}
 	if ($netbsd_bool == 1) {
-		&netbsd(	$ARGV[1]);
+#		&netbsd(	$ARGV[1]);
+		&netbsd_pkgsrc(	$ARGV[1]);
 	}
 	if ($openbsd_bool == 1) {
 		&openbsd(	$ARGV[1]);
@@ -208,8 +194,10 @@ if (@ARGV == 1) {
 	if ($ubuntu_bool == 1) {
 		&ubuntu(	$ARGV[1]);
 	}
+} elsif (@ARGV != 0) {
+	die "Error:\tToo many parameters. Usage: $0 [--no-threads] pkgname\n";
 } else {
-	die "Too many parameters. Usage: $0 [--no-threads] pkgname\n";
+	die "Error:\tPlease specify a search term.\n";
 }
 
 sub fedora {
@@ -267,8 +255,9 @@ sub month_to_digits {
 }
 
 sub ubuntu {
+	my $ubuntu_current_release = "intrepid";
 	my $base = "http://packages.ubuntu.com";
-	my $query = $base."/cgi-bin/search_packages.pl?keywords=$_[0]&searchon=names&subword=1&version=all&release=all";
+	my $query = $base."/search?keywords=".$_[0]."&searchon=names&suite=".$ubuntu_current_release."&section=all";
 	my @lines = split /\n/, &fetchdoc($query);
 	my @names;
 	my @versions;
@@ -495,11 +484,12 @@ sub freebsd {
 	my $now = 0;
 	for (my $i = 50; $i<@lines; $i++) {
 		if ($lines[$i] =~ /^<dt><b>/) {
-			my $anchor = (split /"/, $lines[$i])[1];
-			($names[$now],$versions[$now]) = &combos_freebsd($anchor);
-			push @repos, "";
+			my @parts = split /"/, $lines[$i];
+			($names[$now],$versions[$now]) = &combos_freebsd($parts[1]);
+			my @subparts = split /\//, $parts[3];
 			push @sizes, "";
-			push @urls,  "http://www.freebsd.org/cgi/pds.cgi?ports/www/".$names[$now];
+			push @repos, $subparts[@subparts-2];
+			push @urls,  "http://www.freebsd.org/cgi/pds.cgi?ports/".$subparts[@subparts-2]."/".$names[$now];
 			$now++;
 			push @dates, "";
 		}
@@ -508,20 +498,6 @@ sub freebsd {
 		&pretty_print($cols,@columns,"FreeBSD",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
 	return ();
-}
-
-sub combor {
-	my @chars = split //, $_[0];
-	my $name;
-	my $version;
-	for (my $i = @chars - 1; $i >= 0; $i--) {
-		if ($chars[$i] !~ /[0-9\-\.]/ && !($chars[$i] eq "i" && $chars[$i-1] eq "-" && $chars[$i+1] =~ /[6543]/)) {
-			$name = join "", @chars[0..($i)];
-			$version = join "", @chars[($i+2)..(@chars-1)];
-			last;
-		}
-	}
-	return($name,$version);
 }
 
 
@@ -585,9 +561,8 @@ sub search_by_name { # versions, sizes, dates, repos, urls
 			push @urls,     $iniurls[$i];
 		}
 	}
-	return(\@names,\@versions,\@sizes,\@dates,\@repos,\@urls)
+	return(\@names,\@versions,\@sizes,\@dates,\@repos,\@urls);
 }
-
 
 sub netbsd {
 	my $netbsdbase = "ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/";
@@ -644,12 +619,12 @@ sub netbsd {
 sub openbsd {
 	my $rel = 4.4;
 	my $baseurl = "http://www.openbsd.org/".$rel."_packages/";
-	my @ininames;
-	my @iniversions;
-	my @iniurls;
-	my @inirepos;
-	my @inisizes;
-	my @inidates;
+	my @names;
+	my @versions;
+	my @urls;
+	my @repos;
+	my @sizes;
+	my @dates;
 	my $distroname = "OpenBSD";
 	my $file = "$confdir/$distroname\_$rel.list";
 	# if the list file exists and is recent, use its contents, otherwise download and parse a fresh copy
@@ -657,7 +632,7 @@ sub openbsd {
 		open IN, $file;
 		chomp (my @lines = <IN>);
 		for (my $i = 0; $i<@lines;$i++) {
-			($ininames[$i],$iniversions[$i],$iniurls[$i]) = split /\t/, $lines[$i];
+			($names[$i],$versions[$i],$urls[$i]) = split /\t/, $lines[$i];
 		}
 		close IN;
 	} else {
@@ -666,29 +641,25 @@ sub openbsd {
 		for (my $i = 0; $i < @lines; $i++) {
 			if ($lines[$i] =~ /^<td><b><a/) {
 				my @parts = split />|href=|\.tgz</, $lines[$i];
-				push @iniurls, $baseurl.$parts[3];
-				($ininames[$now],$iniversions[$now]) = &combos($parts[4]);
+				push @urls, $baseurl.$parts[3];
+				($names[$now],$versions[$now]) = &combos($parts[4]);
 				$now++;
-				push @inirepos, "";
-				push @inisizes, "";
-				push @inidates, "";
+				push @repos, "";
+				push @sizes, "";
+				push @dates, "";
 			}
 		}
 		open OUT, ">$file";
-		for (my $i = 0; $i < @iniurls;$i++) {
-			print OUT "$ininames[$i]\t$iniversions[$i]\t$iniurls[$i]\n";
+		for (my $i = 0; $i < @urls;$i++) {
+			print OUT "$names[$i]\t$versions[$i]\t$urls[$i]\n";
 		}
 		close OUT;
 	}
-	my ($p1,$p2,$p3,$p4,$p5,$p6) = &search_by_name(\@ininames,\@iniversions,\@inisizes,\@inidates,\@inirepos,\@iniurls,$_[0]);
-	my @names    = @$p1;
-	my @versions = @$p2;
-	my @sizes    = @$p3;
-	my @dates    = @$p4;
-	my @repos    = @$p5;
-	my @urls     = @$p6;
+	my $matcher = $_[0];
 	for (my $i = 0; $i < @repos; $i++) {
-		&pretty_print($cols,@columns,$distroname,$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+		if ($names[$i] =~ /$matcher/) {
+			&pretty_print($cols,@columns,$distroname,$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+		}
 	}
 	return ();
 }
@@ -747,14 +718,49 @@ sub gentoo {
 	return ();
 }
 
+# this almost works, will make the whole thing a lot faster!
+#sub combos {
+#	my @parts = split /-/, $_[0];
+#	my $name;
+#	my $version;
+#	for (my $i = 1; $i < @parts-1; $i++) {
+#		if ($parts[$i] =~ /^[0-9]/) {
+#			$name = join "-", @parts[0..($i-1)];
+#			$version = join "-", @parts[$i..(@parts-1)];
+#			last;
+#		}
+#	}
+#	return($name,$version);
+#}
+
 sub combos {
-	my @parts = split /-/, $_[0];
+        my @chars = split //, $_[0];
+        my $name;
+        my $version; 
+        for (my $i = 0; $i < @chars-1; $i++) {
+                if ($chars[$i] eq "-"#) {
+#			if (
+&& $chars[$i+1] =~ /[0-9]/) {
+                        	$name = join "", @chars[0..($i-1)];
+                        	$version = join "", @chars[($i+1)..(@chars-1)];
+                        	last;
+#			} else {
+#				$i++; #minor speed-up
+#			}
+                }
+        }
+        return($name,$version);
+}
+
+sub combor {
+	my @chars = split //, $_[0];
 	my $name;
 	my $version;
-	for (my $i = 1; $i < @parts-1; $i++) {
-		if ($parts[$i] =~ /^[0-9]/) {
-			$name = join "-", @parts[0..($i-1)];
-			$version = join "-", @parts[$i..(@parts-1)];
+	for (my $i = @chars - 1; $i >= 0; $i--) {
+		if ($chars[$i] !~ /[0-9\-\.]/ && !($chars[$i] eq "i" && $chars[$i-1] eq "-" && $chars[$i+1] =~ /[6543]/)) {
+			$name = join "", @chars[0..($i)];
+			$version = join "", @chars[($i+2)..(@chars-1)];
+			last;
 		}
 	}
 	return($name,$version);
@@ -816,7 +822,7 @@ sub debian {
 	my @urls;
 	my @sizes;
 	my @dates;
-	my @dists = ( 'stable', 'testing', 'unstable', 'experimental');
+	my @dists = ( 'stable', 'testing' );
 	for (my $x = 0; $x < @dists; $x++) {
 		my @lines = split /\n/, &fetchdoc($debianbase."/search?keywords=".$_[0]."&searchon=names&suite=".$dists[$x]."&section=all");
 		for (my $i = 50; $i < @lines; $i++) {
@@ -826,7 +832,7 @@ sub debian {
 				my @parts = split /href\=\"|\"\>|<\/a\>/, $lines[$i+3];
 				$parts[4] =~ s/ \(|\)://g;
 				push @groups, $parts[4];
-				push @repos, "";
+				push @repos, $dists[$x];
 				push @urls,  $debianbase.$parts[2];
 				push @sizes, "";
 				push @dates, "";
@@ -865,7 +871,7 @@ sub aur {
 				push @dates, "";
 			} elsif ($indicator == 3) {
 				push @combos,    &arch_site_get_cont($lines[$i]);
-				push @urls,      $aurbase.&aur_site_get_url ($lines[$i]);
+				push @urls,      $aurbase."/".&aur_site_get_url ($lines[$i]);
 			} elsif ($indicator == 6) {
 				$indicator = 0;
 			}
@@ -1026,10 +1032,10 @@ sub prep_suse_repo {
 				$_[0] =~ s/\/.*//;
 				return $_[0];
 			}
-		} elsif ($_[0] eq "http://download.opensuse.org/distribution/11.0/repo/oss/suse") {
+		} elsif ($_[0] =~ /http\:\/\/download\.opensuse\.org\/distribution\// && $_[0] =~ /repo\/oss/) {
 			return "suse/oss";
 		}
-	} elsif ($_[0] eq "http://packman.iu-bremen.de/suse/11.0") {
+	} elsif ($_[0] =~ "http://packman.iu-bremen.de/suse/") {
 		return "packman";
 	} else {
 		return $_[0];
@@ -1037,6 +1043,7 @@ sub prep_suse_repo {
 }
 
 sub opensuse {
+	my $release_string = "111";
 	my $opensusebase = "http://packages.opensuse-community.org";
 	my @names;
 	my @repos;
@@ -1046,9 +1053,10 @@ sub opensuse {
 	my @sizes;
 	my @dates;
 	my $distroname = "openSUSE";
-	my @lines = split /\n/, &fetchdoc($opensusebase."/index.jsp?searchTerm=".$_[0]."&distro=openSUSE_110");
+	my @lines = split /\n/, &fetchdoc($opensusebase."/index.jsp?searchTerm=".$_[0]."&distro=openSUSE_".$release_string);
 	my $temprepo = "";
-	for (my $i = 30; $i < @lines; $i++) {		if ($lines[$i] =~ /class\=\"repourl\"\>Results from/) {
+	for (my $i = 30; $i < @lines; $i++) {
+		if ($lines[$i] =~ /class\=\"repourl\"\>Results from/) {
 			$temprepo = &prep_suse_repo((split /<a href=\"|\<\/a\>|\"\>/, $lines[$i])[3]);
 		}
 		if ($lines[$i] =~ /class=\"result\"/) {
@@ -1068,7 +1076,36 @@ sub opensuse {
 	for (my $i = 0; $i < @repos; $i++) {
 		&pretty_print($cols,@columns,$distroname,$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
+	return();
 }
+
+
+sub netbsd_pkgsrc {
+	my @lines = split /\n|<br\/>/, &fetchdoc("http://pkgsrc.se/search.php?so=".$_[0]);
+	my @names;
+	my @versions;
+	my @dates;
+	my @sizes;
+	my @repos;
+	my @urls;
+	for (my $i = 0; $i < @lines; $i++) {
+		if ($lines[$i] =~ /version/) {
+			my @parts = split /href="|<\/a>, <em><b>version |<\/b>, maintainer|\">/, $lines[$i];
+#			print "@parts\n";
+			push @urls, 	$parts[1];
+			push @versions, $parts[3];
+			my @subparts = split /\//, $parts[2];
+			push @repos, $subparts[0];
+			push @names, $subparts[1];
+			push @sizes, "";
+		}
+	}
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"NetBSD",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+	return();
+}
+
 
 sub template_query {
 	my $query = "url";
@@ -1112,6 +1149,7 @@ sub template_listing {
 	my @inidates;
 	my $now = 0;
 	my $distroname = "mydistro";
+	my $base = "url";
 	# prepare a list file
 	my $file = "$confdir/$distroname.list";
 	# if the list file exists and is recent, use its contents, otherwise download and parse a fresh copy
@@ -1125,7 +1163,7 @@ sub template_listing {
 		close IN;
 	} else {
 		# download fresh copy
-		my @lines = split /\n/, &fetchdoc($netbsdbase."README-all.html");
+		my @lines = split /\n/, &fetchdoc($base."README-all.html");
 		for (my $i = 0; $i < @lines; $i++) {
 			if ($lines[$i] =~ /unique_tag/) {
 				# extract all info from the downloaded list

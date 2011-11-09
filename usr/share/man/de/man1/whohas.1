@@ -1,0 +1,32 @@
+.TH "whohas" "1" "0.22" "Philipp Wesche" ""
+.SH "NAME"
+.LP 
+whohas \- findet Pakete in verschiedenen Repositories
+.SH "SYNTAX"
+.LP 
+whohas [\fI\-\-no\-threads\fP] [\fI\-d Dist1[,Dist2[,Dist3 etc.]]\fP] \fIpkgname\fP
+.SH "BESCHREIBUNG"
+.LP 
+whohas ist ein Kommandozeilenprogramm, das verfügbare Pakete von Arch, Debian, Fedora, Gentoo, openSUSE, Slackware (and linuxpackages.net), Source Mage, Ubuntu, FreeBSD, NetBSD, OpenBSD, Fink und MacPorts findet, die einem Suchbegriff entsprechen.
+.SH "OPTIONEN"
+.LP 
+.TP 
+\fB\-\-no\-threads\fR
+Keine Threads bei der Ausführung, Repositories werden seriell nacheinander befragt und jeweils die Antwort abgewartet (sehr viel langsamer)
+.TP 
+\fB\-d Dist1[,Dist2[,Dist3 etc.]]\fR
+Durchsucht nur aufgelistete Distributionen. Gültige Angaben für Dist1 etc. sind "archlinux", "debian", "fedora", "fink", "freebsd", "gentoo", "macports", "netbsd", "openbsd", "opensuse", "slackware", "sourcemage", und "ubuntu".
+.TP 
+\fBpkgname\fR
+Suchbegriff
+.SH "DATEIEN"
+.LP
+whohas speichert Cachedateien für einige Repositories in ~/.whohas
+.SH "SIEHE AUCH"
+.LP 
+\fIintro.txt.gz\fP und \fI/usr/share/doc/whohas/intro.html\fP sind alternative Quellen über whohas.
+.SH "AUTOR"
+.LP 
+whohas wird von Philipp Wesche <phi1ipp@yahoo.com> entwickelt.
+.LP 
+Diese Dokumentation wurde von Philipp Wesche <phi1ipp@yahoo.com> geschrieben, basierend auf einer Vorlage von Jonathan Wiltshire <debian@jwiltshire.org.uk> für das Debian Projekt.

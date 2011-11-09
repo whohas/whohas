@@ -5,23 +5,23 @@
 <title>Philipp's Homepage: whohas</title>
 <meta name=description content="whohas is a script to query Linux package databases.">
 <meta name=keywords content="package management, command line tool, script, perl, pkgbuild, ebuild, cut, grep, debian, gentoo, slackware, arch, freebsd, openbsd, netbsd, fedora, linux, search, find, seek, cli">
-<link rel="stylesheet" type="text/css" href="/2004/gainsboro.css">
+<link rel="stylesheet" type="text/css" href="html_assets/blackleaf.css" title="Black leaf" media="screen">
 </head>
 <body>
 <div id=hd>
-<a name="top"><h1 class=top>Philipp Wesche's</h1></a>
-<p id=mu> <a href="/2004/profile.htm">profile</a> &nbsp; <a href="/2004/writings.html" class=ex>articles</a> &nbsp; <a href="/2004/cv.html" class=ex>CV</a> &nbsp; <a href="/2004/dc.html" class=ex>disclaimer</a> &nbsp; <a href="/2004/ad.html">contact</a> &nbsp; <a href="/old1/index.html" class=ex>old site</a></p>
+<a name="top"><h1 class=top>whohas</h1></a>
 </div>
 <div id=main>
-	<h2>whohas 0.12</h2>
+<p><a href="html_assets/screenshot.jpg"><img border=0 src="html_assets/screenshot.jpg" width="500px"></a></p>
+<h2>whohas 0.22</h2>
 <h3>Description</h3>
-<p>whohas is a command line tool that allows querying several package lists at once - currently supported are Arch, Debian, Fedora, Gentoo, Slackware, Source Mage, FreeBSD, NetBSD and OpenBSD. whohas is written in Perl and was designed to help package maintainers find ebuilds, pkgbuilds and similar package definitions from other distributions to learn from. However, it can also be used by normal users who want to know:</p>
+<p>whohas is a command line tool that allows querying several package lists at once - currently supported are Arch, Debian, Fedora, Gentoo, openSUSE, Slackware (and linuxpackages.net), Source Mage, Ubuntu, FreeBSD, NetBSD, OpenBSD, Fink and MacPorts. whohas is written in Perl and was designed to help package maintainers find ebuilds, pkgbuilds and similar package definitions from other distributions to learn from. However, it can also be used by normal users who want to know:</p>
 <ul>
 <li>Which distribution provides packages on which the user depends.</li>
 <li>What version of a given package is in use in each distribution, or in each release of a distribution (implemented only for Debian).</li>
 </ul>
-<h3>Screenshot of 0.14</h3>
-<a href="screenshot.jpg">Screenshot</a>
+<h3>News</h3>
+<p>There is now a "--no-threads" switch for those that need to suppress threading (not recommended, will be very slow).</p>
 <h3>Tutorial</h3>
 <p>It is suggested you use Unix command line tools to enhance your search results. whohas is optimised for fast execution. This is done by threading, and the order of results cannot be guaranteed. To nonetheless get a standardised output, alphabetically sorted by distribution, use the sort tool:</p>
 <p class=code>whohas gimp | sort</p>
@@ -32,43 +32,46 @@
 <p>The spaces will ensure that only results for the package gimp are displayed, not for gimp-print etc.</p>
 <p>If you want results for a particular distribution only, do</p>
 <p class=code>whohas arch | grep "^Arch"</p>
-<p>Output for each module will still be ordered, so you don't need to sort results in this case, although you may wish to do so for some distributions. Distribution names are abbreviated as "Arch", "Debian", "Fedora", "Gentoo", "Slackware", "SMGL" (Source Mage Linux) and FreeBSD, NetBSD and OpenBSD.</p>
+<p>Output for each module will still be ordered, so you don't need to sort results in this case, although you may wish to do so for some distributions. Distribution names are abbreviated as "Arch", "Debian", "Fedora", "Gentoo", "Slackware", "Source Mage" and FreeBSD, NetBSD, OpenBSD, Fink and DarwinPorts.</p>
 <p>Output in version 0.1 <a href="output0.txt">looked like this</a>. The first column is the name of the distribution, the second the name of the package, the third the version number, then the date, repository name and a url linking to more information about the package. Future versions will have package size information, too. Column lengths are fixed, so you can use cut:</p>
-<p class=code>whohas vim | grep " vim " | cut -b 36-45</p>
-<p>The first bytes of the data fields at the time of writing are 11, 37, 48, 53, 64 and 76.</p>
+<p class=code>whohas vim | grep " vim " | cut -b 38-47</p>
+<p>The first bytes of the data fields at the time of writing are 13, 39, 50, 55, 66 and 78.</p>
 <p><a href="output1.txt">Here</a> is an example of whohas 0.1 in a terminal session, showing how it works with grep and cut.</p>
 <h3>Features and limitations</h3>
-<p class=ind>Debian refers to the binary distribution. Slackware queries Current only. Binary sizes for Fedora are package sizes - space needed on disk will be greater by about factor 2. Binary sizes for Debian are unpacked sizes. All details (including availability, version numbers and binary sizes) are for the x86 architecture.</p>
-<p>Debian version numbers in rare cases may not be for x86 (will be fixed). Gentoo version availability may not be for x86 (will be fixed). I recommend you consult the URLs provided in the output, which give detailed and accurate information about each package. You may want to use a terminal that recognises hyperlinks and allows easy access through the browser, such as gnome-terminal.</p>
-<p>For Fedora, only release 4 is enabled by default, and only the most up to date package will be listed if different versions are available.</p>
+<p>Debian refers to the binary distribution. Slackware queries Current only. <s>Binary sizes for Fedora are package sizes - space needed on disk will be greater by about factor 2. Binary sizes for Debian are unpacked sizes.</s> (Sizes not currently supported for these distros.) All details (including availability, version numbers and binary sizes) are for the x86 architecture.</p>
+<p class=ind>Debian version numbers in rare cases may not be for x86 (will be fixed). Gentoo version availability may not be for x86 (will be fixed). I recommend you consult the URLs provided in the output, which give detailed and accurate information about each package. You may want to use a terminal that recognises hyperlinks and allows easy access through the browser, such as gnome-terminal.</p>
+<p class=indd>For Fedora, only release 10 is enabled by default, and only the most up to date package will be listed if different versions are available.</p>
 <h3>Appeal</h3>
-<p class=ind>I would like to encourage distributors at this time to provide web query interfaces to package lists, and specifically provide the following information: package name, version, date, size and a url to further information (maintainer, build information etc.)</p>
+<p>I would like to encourage distributors at this time to provide web query interfaces to package lists, and specifically provide the following information: package name, version, date, size and a url to further information (maintainer, build information etc.)</p>
 <h3>Changelog</h3>
-<p class=ind><a href="Changelog">Link</a></p>
+<p><a href="Changelog">Link</a></p>
 <h3>Dependencies</h3>
 <ul>
-<li>wget</li>
 <li>date utility</li>
 <li>Perl</li>
 <li>LWP::UserAgent (usually packaged as perl-libwww or libwww-perl)</li>
 </ul>
 <p>Currently, the local repositories created in the user's home directory take up 900K.</p>
-<h3>Download</h3>
-<p class=ind><a href="whohas-0.12.tar.gz">whohas-0.12.tar.gz</a></p>
-<p class=ind><a href="whohas-0.11.tar.gz">whohas-0.11.tar.gz</a></p>
-<p class=ind><a href="whohas-0.1.tar.gz">whohas-0.1.tar.gz</a></p>
+<h3>Whohas.app</h3>
+<p>Whohas.app is a Mac OS X front-end to whohas, available from the <a href="http://www.philippwesche.org/200811/whohas/intro.html">whohas web page</a>.</p>
 <h3>Bug reports</h3>
-<p class=ind><a href="mailto:phi1ipp@yahoo.com">phi1ipp@yahoo.com</a></p>
+<p class=indd><a href="mailto:phi1ipp@yahoo.com">phi1ipp@yahoo.com</a></p>
 <h3>Acknowledgements</h3>
-<p>Thanks to Andrew "ruskie" Levstik for suggesting the Source Mage module and providing a small package list file on their server.</p>
+<p>Thanks to Andrew "ruskie" Levstik for suggesting the <a href="http://www.sourcemage.org/">Source Mage</a> module and providing a small package list file on their server for whohas to parse.</p>
+<p>Thanks to Ladislav Bodnar of <a href="http://distrowatch.com/">Distrowatch</a> for advice on version checking, and his <a href="http://distrowatch.com/packages.php">list of seminal Linux packages and stable version numbers</a>.</p>
+<p>Thanks to Asari Takashi, Ladislav Hagara and Enrico Tröger for sending patches.</p>
+<p>Also thanks to all package maintainers.</p>
 <h3>History</h3>
-<p class=ind>whohas started life as whichdistro.pl, but its author preferred the shorter, hopefully more memorable name which is more conducive to word play.</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p class=up>updated 24 July 2005</p>
+<p>whohas started life as whichdistro.pl, but its author preferred the shorter, hopefully more memorable name which is more conducive to word play.</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
+<p class=up>updated 5 January 2009</p>
 <p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<script src="http://static.getclicky.com/56757.js" type="text/javascript"></script>
+<noscript><p><img alt="Clicky" width=1 height=1 src="http://static.getclicky.com/56757-db8.gif" /></p></noscript></div>
 </body>
 </html>

@@ -1,4 +1,4 @@
-whohas 0.12
+whohas 0.22
 
 Dependencies
 ============
@@ -6,7 +6,6 @@ Dependencies
 perl
 LWP::UserAgent (usually packaged as libwww-perl or perl-libwww, depending on distribution)
 date
-wget
 
 
 To install

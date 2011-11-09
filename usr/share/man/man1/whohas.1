@@ -1,0 +1,32 @@
+.TH "whohas" "1" "0.22" "Jonathan Wiltshire" ""
+.SH "NAME"
+.LP 
+whohas \- find packages in various distributions' repositories
+.SH "SYNTAX"
+.LP 
+whohas [\fI\-\-no\-threads\fP] [\fI\-d Dist1[,Dist2[,Dist3 etc.]]\fP] \fIpkgname\fP
+.SH "DESCRIPTION"
+.LP 
+whohas is a command line tool to query package lists from the Arch, Debian, Fedora, Gentoo, openSUSE, Slackware (and linuxpackages.net), Source Mage, Ubuntu, FreeBSD, NetBSD, OpenBSD, Fink and MacPorts distributions.
+.SH "OPTIONS"
+.LP 
+.TP 
+\fB\-\-no\-threads\fR
+Don't use multiple threads to query package lists (will be much slower)
+.TP 
+\fB\-d Dist1[,Dist2[,Dist3 etc.]]\fR
+Queries only for packages for the listed distributions. Recognised values for Dist1, Dist2, etc. are "archlinux", "debian", "fedora", "fink", "freebsd", "gentoo", "macports", "netbsd", "openbsd", "opensuse", "slackware", "sourcemage", and "ubuntu".
+.TP 
+\fBpkgname\fR
+Package name to query for
+.SH "FILES"
+.LP
+whohas uses various files in ~/.whohas to cache package lists for some distributions.
+.SH "SEE ALSO"
+.LP 
+See \fIintro.txt.gz\fP or \fIintro.html\fP notes on using whohas.
+.SH "AUTHORS"
+.LP 
+whohas is written and maintained by Philipp Wesche <phi1ipp@yahoo.com>
+.LP 
+This man page was written by Jonathan Wiltshire <debian@jwiltshire.org.uk> for the Debian project and adapted for a new version by Philipp Wesche <phi1ipp@yahoo.com>

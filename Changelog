@@ -1,3 +1,14 @@
+0.22
+
+netbsd module now queries pkgsrc.se, shows more details, is faster
+
+Miscellaneous bugfixes
+
+Also using the old combos subroutine again for some repositories, is slower
+
+Added manpages in English and German, updated install script to install manpages to /usr/share/man
+
+
 0.21
 
 Added back Gentoo
