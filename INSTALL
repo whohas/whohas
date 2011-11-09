@@ -1,3 +1,4 @@
 whohas 0.1 has the following dependencies:
+date
 perl
 LWP::UserAgent (usually packaged as libwww-perl or perl-libwww, depending on distribution)

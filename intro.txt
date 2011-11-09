@@ -1,5 +1,7 @@
 Release notes for whohas 0.1
 
+More information can be found at http://www.philippwesche.org/2004/programs/whohas/intro.html
+
 Philipp L. Wesche, 17 July 2005
 
 whohas is a command line tool that allows querying several package lists at once - currently supported are Arch, Debian, Gentoo and Slackware. whohas is written in Perl and was designed to help package maintainers find ebuilds, pkgbuilds and similar package definitions from other distributions to learn from. However, it can also be used by normal users who want to know:

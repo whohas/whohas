@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # whohas, a Perl utility to display availability of source
-# and binary packages from major Linux distributions
+# and binary packages from major Linux and BSD distributions
 #
 # Copyright (C) Philipp L. Wesche 2005
 #
@@ -20,8 +20,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
-
 use strict;
 use sigtrap;
 
@@ -31,94 +29,249 @@ my $debianbase = "http://packages.debian.org";
 my $slackbase  = "http://slackware.it/en/pb";
 my $gentoobase = "http://packages.gentoo.org";
 my $fedorabase = "http://download.fedora.redhat.com/pub/fedora/linux";
+my $netbsdbase = "ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/";
+
 
 use Env qw(HOME);
+use threads;
+
 my $confdir = "$HOME/.whohas";
+# make .whohas directory in home directory
+unless (-d $confdir) {
+	mkdir ($confdir, 0777);
+}
 
 my @columns = (9,25,10,4,10,11);
 my $cols = 6;
 
-
+my @thrs;
+my $here = 0;
 if (@ARGV == 1) {
-	&print_arch  ($ARGV[0]);
-	&print_aur   ($ARGV[0]);
-	&print_debian($ARGV[0]);
-	&print_gentoo($ARGV[0]);
-	&print_slack ($ARGV[0]);
+	$thrs[$here++] = threads->new(\&arch,   $ARGV[0]);
+	$thrs[$here++] = threads->new(\&aur,    $ARGV[0]);
+	$thrs[$here++] = threads->new(\&debian, $ARGV[0]);
+	$thrs[$here++] = threads->new(\&freebsd,$ARGV[0]);
+	$thrs[$here++] = threads->new(\&gentoo, $ARGV[0]);
+	$thrs[$here++] = threads->new(\&netbsd, $ARGV[0]);
+	$thrs[$here++] = threads->new(\&openbsd,$ARGV[0]);
+	$thrs[$here++] = threads->new(\&slack,  $ARGV[0]);
+	$thrs[$here++] = threads->new(\&sm,     $ARGV[0]);
+	foreach (@thrs) {
+		$_->join;
+	}
 } else {
 	die "Too many parameters. Usage: $0 pkgname\n";
 }
 
 
-sub print_arch {
-	my ($p1,$p2,$p3,$p4,$p5,$p6) = &arch($_[0]);
+
+sub freebsd {
+	my $query = "http://www.freebsd.org/cgi/ports.cgi?query=".$_[0]."&stype=all";
+	my @lines = split /\n/, &fetchdoc($query);
+	my @names;
+	my @versions;
+	my @dates;
+	my @sizes;
+	my @repos;
+	my @urls;
+	my $now = 0;
+	for (my $i = 50; $i<@lines; $i++) {
+		if ($lines[$i] =~ /^<DT><B>/) {
+			my $anchor = (split /"/, $lines[$i])[1];
+			($names[$now],$versions[$now]) = &combos($anchor);
+			$now++;
+			push @repos, "";
+			push @sizes, "";
+			push @urls,  "$query#$anchor";
+			push @dates, "";
+		}
+	}
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"FreeBSD 5",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+	return ();
+}
+
+sub combos {
+	my @chars = split //, $_[0];
+	my $name;
+	my $version;
+	for (my $i = 0; $i < @chars-1; $i++) {
+		if ($chars[$i] eq "-" && $chars[$i+1] =~ /[0-9]/) {
+			$name = join "", @chars[0..($i-1)];
+			$version = join "", @chars[($i+1)..(@chars-1)];
+			last;
+		}
+	}
+	return($name,$version);
+}
+
+
+
+
+sub sm {
+	my @grimoires = ("test","stable","games","z-rejected");
+	my @lines = split /\n/, &fetchdoc("http://codex.sourcemage.org/listing.txt");
+	my @inirepos;
+	my @ininames;
+	my @iniversions;
+	my @iniurls;
+	my @inidates;
+	my @inisizes;
+	foreach (@lines) {
+		my @comps = split /\^/, $_;
+		for (my $a = 0; $a < @grimoires;$a++) {
+			if (length($comps[$a+1]) > 0) {
+				push @inirepos, $grimoires[$a];
+				push @ininames, $comps[0];
+				push @iniversions, $comps[$a+1];
+				push @inisizes, "";
+				push @iniurls,  "";
+				push @inidates, "";
+			}
+		}
+	}
+	my ($p1,$p2,$p3,$p4,$p5,$p6) = &search_by_name(\@ininames,\@iniversions,\@inisizes,\@inidates,\@inirepos,\@iniurls,$_[0]);
 	my @names    = @$p1;
 	my @versions = @$p2;
 	my @sizes    = @$p3;
 	my @dates    = @$p4;
 	my @repos    = @$p5;
 	my @urls     = @$p6;
-
 	for (my $i = 0; $i < @repos; $i++) {
-		&pretty_print($cols,@columns,"Arch",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+		&pretty_print($cols,@columns,"Src Mage",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
+	return ();
 }
-
-sub print_aur {
-	my ($p1,$p2,$p3,$p4,$p5,$p6) = &aur($_[0]);
+sub search_by_name { # versions, sizes, dates, repos, urls
+	my ($p1,$p2,$p3,$p4,$p5,$p6,$search) = @_;
+	my @ininames    = @$p1;
+	my @iniversions = @$p2;
+	my @inisizes    = @$p3;
+	my @inidates    = @$p4;
+	my @inirepos    = @$p5;
+	my @iniurls     = @$p6;
+	my @names;
+	my @versions;
+	my @sizes;
+	my @dates;
+	my @repos;
+	my @urls;
+	for (my $i = 0;$i<@ininames;$i++) {
+		if ($ininames[$i] =~ /$search/i) {
+			push @names,    $ininames[$i];
+			push @repos,    $inirepos[$i];
+			push @versions, $iniversions[$i];
+			push @sizes,    $inisizes[$i];
+			push @dates,    $inidates[$i];
+			push @urls,     $iniurls[$i];
+		}
+	}
+	return(\@names,\@versions,\@sizes,\@dates,\@repos,\@urls)
+}
+sub netbsd {
+	my @ininames;
+	my @iniversions;
+	my @iniurls;
+	my @inirepos;
+	my @inisizes;
+	my @inidates;
+	my $now = 0;
+	my $distroname = "NetBSD";
+	my $file = "$confdir/$distroname.list";
+	# if the list file exists and is recent, use its contents, otherwise download and parse a fresh copy
+	if (-s $file && `date -Idate` =~ (split / /, `ls -l $file`)[6]) {
+		open IN, $file;
+		chomp (my @lines = <IN>);
+		for (my $i = 0; $i<@lines;$i++) {
+			($ininames[$i],$iniversions[$i],$iniurls[$i]) = split /\t/, $lines[$i];
+		}
+		close IN;
+	} else {
+		my @lines = split /\n/, &fetchdoc($netbsdbase."README-all.html");
+		for (my $i = 10; $i < @lines; $i++) {
+			if ($lines[$i] =~ /^<!-- [0-9A-Za-z]/) {
+				my @parts = split / /, $lines[$i];
+				($ininames[$now],$iniversions[$now]) = &combos($parts[1]);
+				$now++;
+				@parts = split /a href="|">/, $lines[$i];
+				push @iniurls, $netbsdbase.$parts[1];
+				push @inirepos, "";
+				push @inisizes, "";
+				push @inidates, "";
+			}
+		}
+		open OUT, ">$file";
+		for (my $i = 0; $i < @iniurls;$i++) {
+			print OUT "$ininames[$i]\t$iniversions[$i]\t$iniurls[$i]\n";
+		}
+		close OUT;
+	}
+	my ($p1,$p2,$p3,$p4,$p5,$p6) = &search_by_name(\@ininames,\@iniversions,\@inisizes,\@inidates,\@inirepos,\@iniurls,$_[0]);
 	my @names    = @$p1;
 	my @versions = @$p2;
 	my @sizes    = @$p3;
 	my @dates    = @$p4;
 	my @repos    = @$p5;
 	my @urls     = @$p6;
-
 	for (my $i = 0; $i < @repos; $i++) {
-		&pretty_print($cols,@columns,"Arch",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+		&pretty_print($cols,@columns,$distroname,$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
+	return ();
 }
 
-sub print_debian {
-	my ($p1,$p2,$p3,$p4,$p5,$p6) = &debian($_[0]);
+sub openbsd {
+	my $rel = 3.7;
+	my $baseurl = "http://www.openbsd.org/".$rel."_packages/";
+	my @ininames;
+	my @iniversions;
+	my @iniurls;
+	my @inirepos;
+	my @inisizes;
+	my @inidates;
+	my $distroname = "OpenBSD";
+	my $file = "$confdir/$distroname\_$rel.list";
+	# if the list file exists and is recent, use its contents, otherwise download and parse a fresh copy
+	if (-s $file && `date -Idate` =~ (split / /, `ls -l $file`)[6]) {
+		open IN, $file;
+		chomp (my @lines = <IN>);
+		for (my $i = 0; $i<@lines;$i++) {
+			($ininames[$i],$iniversions[$i],$iniurls[$i]) = split /\t/, $lines[$i];
+		}
+		close IN;
+	} else {
+		my @lines = split /\n/, &fetchdoc($baseurl."i386.html");
+		my $now = 0;
+		for (my $i = 0; $i < @lines; $i++) {
+			if ($lines[$i] =~ /^<td><b><a/) {
+				my @parts = split />|href=|\.tgz</, $lines[$i];
+				push @iniurls, $baseurl.$parts[3];
+				($ininames[$now],$iniversions[$now]) = &combos($parts[4]);
+				$now++;
+				push @inirepos, "";
+				push @inisizes, "";
+				push @inidates, "";
+			}
+		}
+		open OUT, ">$file";
+		for (my $i = 0; $i < @iniurls;$i++) {
+			print OUT "$ininames[$i]\t$iniversions[$i]\t$iniurls[$i]\n";
+		}
+		close OUT;
+	}
+	my ($p1,$p2,$p3,$p4,$p5,$p6) = &search_by_name(\@ininames,\@iniversions,\@inisizes,\@inidates,\@inirepos,\@iniurls,$_[0]);
 	my @names    = @$p1;
 	my @versions = @$p2;
 	my @sizes    = @$p3;
 	my @dates    = @$p4;
 	my @repos    = @$p5;
 	my @urls     = @$p6;
-
 	for (my $i = 0; $i < @repos; $i++) {
-		&pretty_print($cols,@columns,"Debian",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+		&pretty_print($cols,@columns,$distroname,$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
+	return ();
 }
 
-sub print_gentoo {
-	my ($p1,$p2,$p3,$p4,$p5,$p6) = &gentoo($_[0]);
-	my @names    = @$p1;
-	my @versions = @$p2;
-	my @sizes    = @$p3;
-	my @dates    = @$p4;
-	my @repos    = @$p5;
-	my @urls     = @$p6;
-
-	for (my $i = 0; $i < @repos; $i++) {
-		&pretty_print($cols,@columns,"Gentoo",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
-	}
-}
-
-sub print_slack {
-	my ($p1,$p2,$p3,$p4,$p5,$p6) = &slack($_[0]);
-	my @names    = @$p1;
-	my @versions = @$p2;
-	my @sizes    = @$p3;
-	my @dates    = @$p4;
-	my @repos    = @$p5;
-	my @urls     = @$p6;
-
-	for (my $i = 0; $i < @repos; $i++) {
-		&pretty_print($cols,@columns,"Slackware",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
-	}
-}
 
 sub gentoo {
 	my @names;
@@ -143,20 +296,11 @@ sub gentoo {
 			push @sizes, "";
 		}
 	}
-	my @dates = &date_turn(@dates);
-	return (\@names,\@versions,\@sizes,\@dates,\@repos,\@urls);
-}
-
-sub date_turn {
-	my @res;
-	foreach (@_) {
-		my @parts = split /-/, $_;
-		push @res, "$parts[2]"."-$parts[1]"."-$parts[0]";
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Gentoo",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
-	return @res;
+	return ();
 }
-
-
 
 sub slack {
 	my @repos;
@@ -168,30 +312,25 @@ sub slack {
 	my @dates;
 	my @lines = split /\n|<br>|<\/td>/, &fetchdoc($slackbase."/searchpkg.php?v=current&string=".$_[0]);
 	my $repo;
+	my $now = 0;
 	for (my $i = 0; $i < @lines; $i++) {
 		if ($lines[$i] =~ /Found [123456789][0-9]* results/) {
 			chop ($repo = (split /results in |\/<br>/, $lines[$i])[1]);
 		} elsif ($lines[$i] =~ /<td nowrap>\[/) {
 			push @repos, $repo;
 			my @parts = split /a href="|"><b>|<\/b>/, $lines[$i];
-			push @combos, $parts[4];
+			$parts[4] =~ s/\/[a-z0-9-]+\///; # dropping some package group information here, could be used...
+			$names[$now],$versions[$now] = &combos($parts[4]);
+			$now++;
 			push @urls, $parts[3];
 			push @dates, "";
 			push @sizes, "";
 		}
 	}
-	foreach (@combos) {
-		$_ =~ s/\/[a-z0-9-]+\///; # dropping some package group information here, could be used...
-		my @chars = split //, $_;
-		for (my $i = 0; $i < @chars-1; $i++) {
-			if ($chars[$i] eq "-" && $chars[$i+1] =~ /[0-9]/) {
-				push @names, join "", @chars[0..($i-1)];
-				push @versions, join "", @chars[($i+1)..(@chars-1)];
-				last;
-			}
-		}
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Slackware",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
-	return (\@names,\@versions,\@sizes,\@dates,\@repos,\@urls);
+	return ();
 }
 
 sub debian {
@@ -229,7 +368,10 @@ sub debian {
 			$i = $a;
 		}
 	}
-	return (\@names,\@versions,\@sizes,\@dates,\@repos,\@urls);
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Debian",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+	return ();
 }
 
 sub aur {
@@ -266,7 +408,10 @@ sub aur {
 		push @names,    $units[0];
 		push @versions, $units[1];
 	}
-	return (\@names,\@versions,\@sizes,\@dates,\@repos,\@urls);
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Arch",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+	return ();
 }
 
 sub arch {
@@ -304,8 +449,10 @@ sub arch {
 			# 2 is package group, 5 is description
 		}
 	}
-	my @dates = &date_turn(@dates);
-	return (\@names,\@versions,\@sizes,\@dates,\@repos,\@urls);
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Arch",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+	return ();
 }
 
 
@@ -333,6 +480,10 @@ sub fetchdoc {
 	use LWP::UserAgent;
 
 	my $url = $_[0];
+	my $silent = 0;
+	if (@_ == 2 && $_[1] eq "silent") {
+		$silent = 1;
+	}
 
 	$url =~ s/\&amp\;/\&/ig;   # convert &amp; to &
 
@@ -349,14 +500,14 @@ sub fetchdoc {
 			$restest = $firstline[1];
 		} elsif (@firstline > 3) {
 			$restest = $firstline[0];
-		} elsif (@firstline < 3) {
-			print ("Server response: $response[0]\ndid not have the anticipated format.");
 		}
-		if ($restest == 200) {
+		if ($restest == 200 || $response[0] =~ /200 OK/) {
 		# server response 200 is a stringent criterion, but should work
 			last;
 		} elsif ($count > 4) {   # loop termination condition
-			print ("Tried fetching \"$url\" five times for $_[1]. Giving up.\n");
+			unless ($silent == 1) {
+				print ("Tried fetching \"$url\" five times for $_[1]. Giving up.\n"); #TODO shouldn't this be "warn"?
+			}
 			return ();
 			last;
 		}
@@ -383,4 +534,96 @@ sub pretty_print {
 		}
 	}
 	print $colvals[@colvals-1]."\n"; #last column is unrestricted in length
+}
+
+
+sub template_query {
+	my $query = "url";
+	my @lines = split /\n/, &fetchdoc($query);
+	my @names;
+	my @versions;
+	my @dates;
+	my @sizes;
+	my @repos;
+	my @urls;
+	my $now = 0;
+	for (my $i = 0; $i<@lines; $i++) {
+		if ($lines[$i] =~ /unique_tag/) {
+			# typically, this is where most of the text processing goes:
+			# getting the info and putting it in appropriate arrays
+
+			# use subroutine "combos" if the name and version are represented as, firefox-1.0.6, with the hyphen, and the version number starting with a digit
+			my $anchor = "something";
+			($names[$now],$versions[$now]) = &combos($anchor);
+			$now++;
+			push @names,    "";
+			push @versions, "";
+			push @repos,    "";
+			push @sizes,    "";
+			push @urls,     "";
+			push @dates,    "";
+		}
+	}
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Distroname",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+	return ();
+}
+
+sub template_listing {
+	my @ininames;
+	my @iniversions;
+	my @iniurls;
+	my @inirepos;
+	my @inisizes;
+	my @inidates;
+	my $now = 0;
+	my $distroname = "mydistro";
+	# prepare a list file
+	my $file = "$confdir/$distroname.list";
+	# if the list file exists and is recent, use its contents, otherwise download and parse a fresh copy
+	if (-s $file && `date -Idate` =~ (split / /, `ls -l $file`)[6]) {
+		open IN, $file;
+		chomp (my @lines = <IN>);
+		for (my $i = 0; $i<@lines;$i++) {
+			# get back any info that you put in the file
+			($ininames[$i],$iniversions[$i],$iniurls[$i]) = split /\t/, $lines[$i];
+		}
+		close IN;
+	} else {
+		# download fresh copy
+		my @lines = split /\n/, &fetchdoc($netbsdbase."README-all.html");
+		for (my $i = 0; $i < @lines; $i++) {
+			if ($lines[$i] =~ /unique_tag/) {
+				# extract all info from the downloaded list
+				my @parts = split / /, $lines[$i];
+				# use subroutine "combos" to separate name and version number
+				($ininames[$now],$iniversions[$now]) = &combos($parts[1]);
+				$now++;
+				# any info you couldn't get, put a blank in
+				push @iniurls,  "";
+				push @inirepos, "";
+				push @inisizes, "";
+				push @inidates, "";
+			}
+		}
+		open OUT, ">$file";
+		for (my $i = 0; $i < @iniurls;$i++) {
+			# store the available info in the file
+			print OUT "$ininames[$i]\t$iniversions[$i]\t$iniurls[$i]\n";
+		}
+		close OUT;
+	}
+	# search by hand
+	my ($p1,$p2,$p3,$p4,$p5,$p6) = &search_by_name(\@ininames,\@iniversions,\@inisizes,\@inidates,\@inirepos,\@iniurls,$_[0]);
+	my @names    = @$p1;
+	my @versions = @$p2;
+	my @sizes    = @$p3;
+	my @dates    = @$p4;
+	my @repos    = @$p5;
+	my @urls     = @$p6;
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,$distroname,$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+	return ();
 }

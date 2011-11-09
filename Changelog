@@ -1,0 +1,18 @@
+0.11
+
+version 0.1 re-released as 0.10; version numbering will now have two decimal places
+
+added support for
+- Source Mage
+- FreeBSD
+- NetBSD
+- OpenBSD
+
+information about OpenBSD and NetBSD packages stored locally; updated once a day
+
+date format sort-compatible
+
+modules addressed as threads for speed
+
+module templates included
+
