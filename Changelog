@@ -1,3 +1,8 @@
+0.17
+
+Fixed several modules; all now working except Gentoo (RIP, web interface was
+removed by Gentoo Project) and Fedora
+
 0.16
 
 Bumped or fixed several that weren't working.

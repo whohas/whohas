@@ -3,7 +3,7 @@
 # whohas, a Perl utility to display availability of source
 # and binary packages from major Linux and BSD distributions
 #
-# Copyright (C) Philipp L. Wesche 2005
+# Copyright (C) Philipp L. Wesche 2005-2008
 #
 #
 # This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,8 @@
 use strict;
 use sigtrap;
 
-#TODO Ubuntu, Slackware, DarwinPorts, Fink need to print output
+#TODO fedora needs to print output
+#TODO get more info about slackware, debian and ubuntu packages from subsequent links
 
 my $netbsdbase = "ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/";
 
@@ -50,18 +51,18 @@ if (@ARGV == 1) {
 	} else {
 		$thrs[$here++] = threads->new(\&arch,        $ARGV[0]);
 		$thrs[$here++] = threads->new(\&aur,         $ARGV[0]);
-#		$thrs[$here++] = threads->new(\&darwin,      $ARGV[0]);
+		$thrs[$here++] = threads->new(\&darwin,      $ARGV[0]);
 		$thrs[$here++] = threads->new(\&debian,      $ARGV[0]);
-		$thrs[$here++] = threads->new(\&fedora_wget, $ARGV[0]);
-#		$thrs[$here++] = threads->new(\&fink,        $ARGV[0]);
+	#	$thrs[$here++] = threads->new(\&fedora_wget, $ARGV[0]);
+		$thrs[$here++] = threads->new(\&fink,        $ARGV[0]);
 		$thrs[$here++] = threads->new(\&freebsd,     $ARGV[0]);
-	#	$thrs[$here++] = threads->new(\&gentoo,      $ARGV[0]); # disabled because package search interface seems to have been removed; I remember having problems with the Gentoo people before - shame!
+		#$thrs[$here++] = threads->new(\&gentoo,      $ARGV[0]); # disabled because package search interface seems to have been removed; I remember having problems with the Gentoo people before - shame!
 		$thrs[$here++] = threads->new(\&lp_net,      $ARGV[0]);
-		$thrs[$here++] = threads->new(\&netbsd,      $ARGV[0]);
+	#	$thrs[$here++] = threads->new(\&netbsd,      $ARGV[0]);
 		$thrs[$here++] = threads->new(\&openbsd,     $ARGV[0]);
-#		$thrs[$here++] = threads->new(\&slack,       $ARGV[0]);
+		$thrs[$here++] = threads->new(\&slack,       $ARGV[0]);
 		$thrs[$here++] = threads->new(\&sm,          $ARGV[0]);
-#		$thrs[$here++] = threads->new(\&ubuntu,      $ARGV[0]);
+		$thrs[$here++] = threads->new(\&ubuntu,      $ARGV[0]);
 		foreach (@thrs) {
 			$_->join;
 		}
@@ -81,29 +82,22 @@ sub ubuntu {
 	my @sizes;
 	my @repos;
 	my @urls;
+	my @groups;
 	my $now = 0;
 	for (my $i = 0; $i<@lines; $i++) {
 		if ($lines[$i] =~ /<h3>Package /) {
-			my @splits = split /<h3>Package |<\/h3>/, $lines[$i];
-			my $name = $splits[1];
-
-			for (my $a = ($i+1); $a < ($i+50); $a++) {
-				if ($lines[$a] =~ /<li><a href="/) {
-					my @parts = split /<\/a>/, $lines[$a];
-					my $repo = $parts[0];
-					$repo =~ s/^.*">//g;
-					@parts = split /<br>|ubuntu/, $lines[$a+1]; # cut at ubuntu cause it's too long anyway
-					push @versions, $parts[1];
-					push @names, $name;
-					push @repos, $repo;
-					push @sizes,    "";
-					push @dates,    "";
-					@parts = split /\"/, $lines[$a]; # cut at ubuntu cause it's too long anyway
-					push @urls, $base.$parts[1];
-				} elsif ($lines[$a] =~ /<h3>Package /) {
-					last;
-				}
-			}
+			my $name = (split /h3>Package |<\/h3>/, $lines[$i])[1];
+			push @names, $name;
+			my @parts = split /href\=\"|\"\>|<\/a\>/, $lines[$i+3];
+			$parts[4] =~ s/ \(|\)://g;
+			push @groups, $parts[4];
+			push @repos, "";
+			push @urls,  $base.$parts[2];
+			push @sizes, "";
+			push @dates, "";
+			@parts = split />|: /, $lines[$i+6];
+			push @versions, $parts[1];
+			$i += 11;
 		}
 	}
 	for (my $i = 0; $i < @repos; $i++) {
@@ -169,23 +163,26 @@ sub lp_net_details {
 }
 
 sub darwin {
-	my $baseurl = "http://darwinports.com";
+	my $baseurl = "http://www.macports.org";
 	my @names;
 	my @versions;
 	my @dates;
 	my @sizes;
 	my @repos;
 	my @urls;
-	my @lines = split /\n/, &fetchdoc($baseurl."/?q=".$_[0]);
+	my @lines = split /\n/, &fetchdoc($baseurl."/ports.php?by=name&substr=".$_[0]);
 	for (my $i = 70; $i < @lines; $i++) {
 		if ($lines[$i] =~ /<dt><b>/) {
-			my @parts = split /href="|">|<\/a><\/b> |<\/dt/, $lines[$i];
-			push @urls,     $parts[1];
-			push @names,    $parts[2];
-			push @versions, $parts[3];
-			push @repos, "";
-			push @sizes, "";
-			push @dates, "";
+			my @parties = split /\<dt\>\<b\>/, $lines[$i];
+			for (my $javar = 1; $javar < @parties; $javar++) {
+				my @parts = split /href="|">|<\/a><\/b> |<\/dt/, $parties[$javar];
+				push @urls,     $parts[1];
+				push @names,    $parts[2];
+				push @versions, $parts[3];
+				push @repos, "";
+				push @sizes, "";
+				push @dates, "";
+			}
 		}
 	}
 	for (my $i = 0; $i < @repos; $i++) {
@@ -203,33 +200,20 @@ sub fink {
 	my @sizes;
 	my @repos;
 	my @urls;
-	my @lines = split /\n/, &fetchdoc($baseurl."search.php?summary=".$_[0]);
+	my @lines = split /\n/, &fetchdoc($baseurl."browse.php?summary=".$_[0]);
 	for (my $i = 60; $i < @lines; $i++) {
-		if ($lines[$i] =~ /<li><a /) {
-			my $line;
-			if ($lines[$i] !~ /^<li><a /) {
-				if ($lines[$i] =~ /<ul>/) {
-					$line = (split /<ul>/, $lines[$i])[1];
-				} else {
-					die "unexpected result - please contact maintainer!\n";
-				}
-			} else {
-				$line = $lines[$i];
+		if ($lines[$i] =~ /tr class=\"package\"/) {
+			if ($lines[$i] =~ /^\<tr class\=\"pdbHeading\"\>/) {
+				$lines[$i] =~ s/.*?\<\/tr\>//;
 			}
-			my @parts = split /href=\"|\">|<\/a>/, $line;
-			my $url  = $baseurl.$parts[1];
-			my $name = $parts[2];
-			my ($p1,$p2) = &fink_get_details($url);
-			foreach (@$p1) {
-				push @names, $name;
-				push @urls, $url;
-			}
-			push @versions, @$p1;
-			push @repos, @$p2;
+			my @splitty = split /href\=\"|\"\>|\<\/a\>\<\/td\>\<td class=\"packageName\"\>|\<\/td\>\<td\>/, $lines[$i];
+			push @urls, $splitty[3];
+			push @names, $splitty[4];
+			push @versions, $splitty[5];
+			push @repos, "";
 			push @sizes, "";
 			push @dates, "";
-		}
-		if ($lines[$i] eq '</ul>') {
+		} elsif ($lines[$i] =~ /\<p\>Query took /) {
 			last;
 		}
 	}
@@ -442,13 +426,13 @@ sub freebsd {
 	my @urls;
 	my $now = 0;
 	for (my $i = 50; $i<@lines; $i++) {
-		if ($lines[$i] =~ /^<DT><B>/) {
+		if ($lines[$i] =~ /^<dt><b>/) {
 			my $anchor = (split /"/, $lines[$i])[1];
 			($names[$now],$versions[$now]) = &combos($anchor);
-			$now++;
 			push @repos, "";
 			push @sizes, "";
-			push @urls,  "$query#$anchor";
+			push @urls,  "http://www.freebsd.org/cgi/pds.cgi?ports/www/".$names[$now];
+			$now++;
 			push @dates, "";
 		}
 	}
@@ -458,14 +442,14 @@ sub freebsd {
 	return ();
 }
 
-sub combos {
+sub combor {
 	my @chars = split //, $_[0];
 	my $name;
 	my $version;
-	for (my $i = 0; $i < @chars-1; $i++) {
-		if ($chars[$i] eq "-" && $chars[$i+1] =~ /[0-9]/) {
-			$name = join "", @chars[0..($i-1)];
-			$version = join "", @chars[($i+1)..(@chars-1)];
+	for (my $i = @chars - 1; $i >= 0; $i--) {
+		if ($chars[$i] !~ /[0-9\-\.]/ && !($chars[$i] eq "i" && $chars[$i-1] eq "-" && $chars[$i+1] =~ /[6543]/)) {
+			$name = join "", @chars[0..($i)];
+			$version = join "", @chars[($i+2)..(@chars-1)];
 			last;
 		}
 	}
@@ -675,29 +659,45 @@ sub gentoo {
 	return ();
 }
 
+sub combos {
+	my @chars = split //, $_[0];
+	my $name;
+	my $version;
+	for (my $i = 0; $i < @chars-1; $i++) {
+		if ($chars[$i] eq "-" && $chars[$i+1] =~ /[0-9]/) {
+			$name = join "", @chars[0..($i-1)];
+			$version = join "", @chars[($i+1)..(@chars-1)];
+			last;
+		}
+	}
+	return($name,$version);
+}
+
+
 sub slack {
-	my $slackbase  = "http://packages.slackware.it";
+	my $slackbase  = "http://packages.slackware.it/";
 	my @repos;
+	my @groups;
 	my @names;
 	my @versions;
 	my @urls;
 	my @combos;
 	my @sizes;
 	my @dates;
-	my @lines = split /\n|<br>|<\/td>/, &fetchdoc($slackbase."/search.php?v=current&t=1&q=firefox".$_[0]);
-	my $repo;
+	my @lines = split /\n|<br>|<\/td>/, &fetchdoc($slackbase."/search.php?v=current&t=1&q=".$_[0]);
+#print "@lines\n";
 	my $now = 0;
 	for (my $i = 0; $i < @lines; $i++) {
-		if ($lines[$i] =~ /Found [123456789][0-9]* results/) {
-			chop ($repo = (split /results in |\/<br>/, $lines[$i])[1]);
-		} elsif ($lines[$i] =~ /<td nowrap>\[/) {
-			push @repos, $repo;
-			my @parts = split /a href="|"><b>|<\/b>/, $lines[$i];
-			$parts[4] =~ s/\/[a-z0-9-]+\///; # dropping some package group information here, could be used...
-			($names[$now],$versions[$now]) = &combos($parts[4]);
+		if ($lines[$i] =~ /class="pkgtitle"/) {
+			my @parts = split /a href="|">|<\/a> in |<\/div>/, $lines[$i];
+			$parts[4] =~ s/slackware\///;
+			push @groups, $parts[4];
+			push @repos, "";
+			($names[$now],$versions[$now]) = &combor($parts[3]);
 			$now++;
-			my @arty = split /\"\>/, $parts[1];
-			push @urls, $slackbase.$arty[0];
+#			push @names, $splitty[0];
+#			push @versions, $splitty[1];
+			push @urls, $slackbase.$parts[2];
 			push @dates, "";
 			push @sizes, "";
 		}
@@ -712,36 +712,26 @@ sub debian {
 	my $debianbase = "http://packages.debian.org";
 	my @names;
 	my @repos;
+	my @groups;
 	my @versions;
 	my @urls;
 	my @sizes;
 	my @dates;
-	my @lines = split /\n/, &fetchdoc($debianbase."/cgi-bin/search_packages.pl?version=all&subword=1&exact=&arch=any&releases=all&case=insensitive&keywords=".$_[0]."&searchon=names");
+	my @lines = split /\n/, &fetchdoc($debianbase."/search?keywords=".$_[0]."&searchon=names&suite=stable&section=all");
 	for (my $i = 50; $i < @lines; $i++) {
-		if ($lines[$i] =~ /<h3>Package/) {
+		if ($lines[$i] =~ /<h3>Package /) {
 			my $name = (split /h3>Package |<\/h3>/, $lines[$i])[1];
-			my $a = $i+2;
-			my $have_version = 1;
-			for (;$a < @lines;$a++) {
-				if ($lines[$a] =~ /^<li>/) {
-					my @parts = split /href="|">|<\/a/, $lines[$a];
-					push @names, $name;
-					push @repos, $parts[2];
-					push @urls,  $debianbase.$parts[1];
-					push @sizes, "";
-					push @dates, "";
-					$have_version = 0;
-				} elsif ($lines[$a] =~ /^<br>/) {
-					if ($have_version == 0) {
-						my @parts = split />|: /, $lines[$a];
-						push @versions, $parts[1];
-					}
-					$have_version = 1;
-				} elsif ($lines[$a+1] =~ /<h3/) {
-					last;
-				}
-			}
-			$i = $a;
+			push @names, $name;
+			my @parts = split /href\=\"|\"\>|<\/a\>/, $lines[$i+3];
+			$parts[4] =~ s/ \(|\)://g;
+			push @groups, $parts[4];
+			push @repos, "";
+			push @urls,  $debianbase.$parts[2];
+			push @sizes, "";
+			push @dates, "";
+			@parts = split />|: /, $lines[$i+6];
+			push @versions, $parts[1];
+			$i += 11;
 		}
 	}
 	for (my $i = 0; $i < @repos; $i++) {
