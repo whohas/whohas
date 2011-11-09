@@ -1,3 +1,10 @@
+0.20
+
+Distributions can now be specified on commandline, using the "-d Distribution1,Distribution2" option; the recognised strings are archlinux, debian, fink, freebsd, macports, netbsd, openbsd, opensuse, slackware, sourcemage, ubuntu
+
+Some unrelated string changes
+
+
 0.19
 
 Added switch for unthreaded runs.

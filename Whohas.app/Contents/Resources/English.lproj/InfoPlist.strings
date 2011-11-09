@@ -1,0 +1,4 @@
+CFBundleName = "whohas_app_0.20_forplatypus";
+CFBundleShortVersionString = "0.20";
+CFBundleGetInfoString = "whohas_app_0.20_forplatypus version 0.20 Copyright 2008 Philipp Wesche";
+NSHumanReadableCopyright = "Copyright 2008 Philipp Wesche.";

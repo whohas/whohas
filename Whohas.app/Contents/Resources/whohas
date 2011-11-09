@@ -41,6 +41,10 @@ unless (-d $confdir) {
 my @columns = (11,25,10,4,10,11);
 my $cols = 6;
 
+
+my @thrs;
+my $here = 0;
+
 my $arch_bool		= 1;
 my $debian_bool		= 1;
 my $fink_bool		= 1;
@@ -53,12 +57,9 @@ my $slack_bool		= 1;
 my $sourcemage_bool	= 1;
 my $ubuntu_bool		= 1;
 
-my @thrs;
-my $here = 0;
-
 if (@ARGV > 1) {
 	for (my $i = 0; $i < @ARGV; $i++) {
-		if ($ARGV[$i] eq "-d") {
+		if ($ARGV[$i] =~ /\-d/) {
 			$arch_bool			= 0;
 			$debian_bool		= 0;
 			$fink_bool			= 0;
@@ -72,28 +73,30 @@ if (@ARGV > 1) {
 			$ubuntu_bool		= 0;
 			my @parts = split /,/, $ARGV[$i+1];
 			for (my $a = 0; $a < @parts; $a++) {
-				if (		$parts[$a] =~ /archlinux/i) {
-					$arch_bool			= 1;
-				} elsif (	$parts[$a] =~ /debian/i) {
-					$debian_bool		= 1;
-				} elsif (	$parts[$a] =~ /fink/i) {
-					$fink_bool			= 1;
-				} elsif (	$parts[$a] =~ /freebsd/i) {
-					$freebsd_bool		= 1;
-				} elsif (	$parts[$a] =~ /macports/i) {
-					$macports_bool		= 1;
-				} elsif (	$parts[$a] =~ /netbsd/i) {
-					$netbsd_bool		= 1;
-				} elsif (	$parts[$a] =~ /openbsd/i) {
-					$openbsd_bool		= 1;
-				} elsif (	$parts[$a] =~ /opensuse/i) {
-					$opensuse_bool		= 1;
-				} elsif (	$parts[$a] =~ /slackware/i) {
-					$slack_bool			= 1;
-				} elsif (	$parts[$a] =~ /sourcemage/i) {
-					$sourcemage_bool	= 1;
-				} elsif (	$parts[$a] =~ /ubuntu/i) {
-					$ubuntu_bool		= 1;
+				     if ($parts[$a] =~ /archlinux/i		) {
+				     	$arch_bool			= 1;
+				} elsif ($parts[$a] =~ /debian/i		) {
+						$debian_bool		= 1;
+				} elsif ($parts[$a] =~ /fink/i			) {
+						$fink_bool			= 1;
+				} elsif ($parts[$a] =~ /freebsd/i		) {
+						$freebsd_bool		= 1;
+				} elsif ($parts[$a] =~ /macports/i		) {
+						$macports_bool		= 1;
+				} elsif ($parts[$a] =~ /netbsd/i		) {
+						$netbsd_bool		= 1;
+				} elsif ($parts[$a] =~ /openbsd/i		) {
+						$openbsd_bool		= 1;
+				} elsif ($parts[$a] =~ /opensuse/i		) {
+						$opensuse_bool		= 1;
+				} elsif ($parts[$a] =~ /slackware/i		) {
+						$slack_bool			= 1;
+				} elsif ($parts[$a] =~ /sourcemage/i	) {
+						$sourcemage_bool	= 1;
+				} elsif ($parts[$a] =~ /slackware/i		) {
+						$slack_bool			= 1;
+				} elsif ($parts[$a] =~ /ubuntu/i		) {
+						$ubuntu_bool		= 1;
 				}
 			}
 			splice @ARGV, $i, 2;
@@ -104,83 +107,82 @@ if (@ARGV > 1) {
 
 if (@ARGV == 1) {
 	if ($ARGV[0] eq "whohasme") {
-		my $motto = "You have yourself - that ought to be enough!\n";
+		my $motto = "One Ring to rule them all, One Ring to find them,\nOne Ring to bring them all, One to unite them.\n";
 		exit;
 	} else {
-		if ($arch_bool == 1) {
-			$thrs[$here++] = threads->new(\&arch,		$ARGV[0]);
-			$thrs[$here++] = threads->new(\&aur,		$ARGV[0]);
+		if ($arch_bool			== 1) {
+			$thrs[$here++] = threads->new(\&arch,        		 $ARGV[0]);
+			$thrs[$here++] = threads->new(\&aur,         		 $ARGV[0]);
 		}
-		if ($debian_bool == 1) {
-			$thrs[$here++] = threads->new(\&debian,		$ARGV[0]);
+		if ($debian_bool		== 1) {
+			$thrs[$here++] = threads->new(\&debian,      		 $ARGV[0]);
 		}
-		if ($fink_bool == 1) {
-			$thrs[$here++] = threads->new(\&fink,		$ARGV[0]);
+		if ($fink_bool			== 1) {
+			$thrs[$here++] = threads->new(\&fink,        		 $ARGV[0]);
 		}
-		if ($freebsd_bool == 1) {
-			$thrs[$here++] = threads->new(\&freebsd,	$ARGV[0]);
+		if ($freebsd_bool		== 1) {
+			$thrs[$here++] = threads->new(\&freebsd,     		 $ARGV[0]);
 		}
-		if ($macports_bool == 1) {
-			$thrs[$here++] = threads->new(\&macports,	$ARGV[0]);
+		if ($macports_bool		== 1) {
+			$thrs[$here++] = threads->new(\&macports,      		 $ARGV[0]);
 		}
-		if ($netbsd_bool == 1) {
-			$thrs[$here++] = threads->new(\&netbsd,		$ARGV[0]);
+		if ($netbsd_bool		== 1) {
+			$thrs[$here++] = threads->new(\&netbsd,      		 $ARGV[0]);
 		}
-		if ($openbsd_bool == 1) {
-			$thrs[$here++] = threads->new(\&openbsd,	$ARGV[0]);
+		if ($openbsd_bool		== 1) {
+			$thrs[$here++] = threads->new(\&openbsd,     		 $ARGV[0]);
 		}
-		if ($opensuse_bool == 1) {
-			$thrs[$here++] = threads->new(\&opensuse,	$ARGV[0]);
+		if ($opensuse_bool		== 1) {
+			$thrs[$here++] = threads->new(\&opensuse,    		 $ARGV[0]);
 		}
-		if ($slack_bool == 1) {
-			$thrs[$here++] = threads->new(\&slack,		$ARGV[0]);
-			$thrs[$here++] = threads->new(\&lp_net,		$ARGV[0]);
+		if ($slack_bool			== 1) {
+			$thrs[$here++] = threads->new(\&slack,       		 $ARGV[0]);
+			$thrs[$here++] = threads->new(\&lp_net,      		 $ARGV[0]);		}
+		if ($sourcemage_bool	== 1) {
+			$thrs[$here++] = threads->new(\&sourcemage,          $ARGV[0]);
 		}
-		if ($sourcemage_bool == 1) {
-			$thrs[$here++] = threads->new(\&sourcemage,	$ARGV[0]);
-		}
-		if ($ubuntu_bool == 1) {
-			$thrs[$here++] = threads->new(\&ubuntu,		$ARGV[0]);
+		if ($ubuntu_bool		== 1) {
+			$thrs[$here++] = threads->new(\&ubuntu,      		 $ARGV[0]);
 		}
 		foreach (@thrs) {
 			$_->join;
 		}
 	}
 } elsif ($ARGV[0] eq "--no-threads") {
-	if ($arch_bool == 1) {
-		&arch(		$ARGV[1]);
-		&aur(		$ARGV[1]);
+	if ($arch_bool			== 1) {
+		&arch(				$ARGV[1]);
+		&aur(				$ARGV[1]);
 	}
-	if ($debian_bool == 1) {
-		&debian(	$ARGV[1]);
+	if ($debian_bool		== 1) {
+		&debian(			$ARGV[1]);
 	}
-	if ($fink_bool == 1) {
-		&fink(		$ARGV[1]);
+	if ($fink_bool			== 1) {
+		&fink(				$ARGV[1]);
 	}
-	if ($freebsd_bool == 1) {
-		&freebsd(	$ARGV[1]);
+	if ($freebsd_bool		== 1) {
+		&freebsd(			$ARGV[1]);
 	}
-	if ($macports_bool == 1) {
-		&macports(	$ARGV[1]);
+	if ($macports_bool		== 1) {
+		&macports(			$ARGV[1]);
 	}
-	if ($netbsd_bool == 1) {
-		&netbsd(	$ARGV[1]);
+	if ($netbsd_bool		== 1) {
+		&netbsd(			$ARGV[1]);
 	}
-	if ($openbsd_bool == 1) {
-		&openbsd(	$ARGV[1]);
+	if ($openbsd_bool		== 1) {
+		&openbsd(			$ARGV[1]);
 	}
-	if ($opensuse_bool == 1) {
-		&opensuse(	$ARGV[1]);
+	if ($opensuse_bool		== 1) {
+		&opensuse(			$ARGV[1]);
 	}
-	if ($slack_bool == 1) {
-		&slack(		$ARGV[1]);
-		&lp_net(	$ARGV[1]);
+	if ($slack_bool			== 1) {
+		&slack(				$ARGV[1]);
+		&lp_net(			$ARGV[1]);
 	}
-	if ($sourcemage_bool == 1) {
-		&sourcemage($ARGV[1]);
+	if ($sourcemage_bool	== 1) {
+		&sourcemage(		$ARGV[1]);
 	}
-	if ($ubuntu_bool == 1) {
-		&ubuntu(	$ARGV[1]);
+	if ($ubuntu_bool		== 1) {
+		&ubuntu(			$ARGV[1]);
 	}
 } else {
 	die "Too many parameters. Usage: $0 [--no-threads] pkgname\n";
