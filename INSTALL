@@ -1,4 +1,15 @@
-whohas 0.1 has the following dependencies:
-date
+whohas 0.12
+
+Dependencies
+============
+
 perl
 LWP::UserAgent (usually packaged as libwww-perl or perl-libwww, depending on distribution)
+date
+wget
+
+
+To install
+==========
+
+execute "./install.sh"

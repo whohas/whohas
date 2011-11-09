@@ -1,3 +1,13 @@
+0.12
+
+changed string "Src Mage" to "SGML"
+
+added support for
+- Fedora
+
+added a rudimentary install script
+
+
 0.11
 
 version 0.1 re-released as 0.10; version numbering will now have two decimal places

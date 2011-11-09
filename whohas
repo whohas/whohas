@@ -47,15 +47,16 @@ my $cols = 6;
 my @thrs;
 my $here = 0;
 if (@ARGV == 1) {
-	$thrs[$here++] = threads->new(\&arch,   $ARGV[0]);
-	$thrs[$here++] = threads->new(\&aur,    $ARGV[0]);
-	$thrs[$here++] = threads->new(\&debian, $ARGV[0]);
-	$thrs[$here++] = threads->new(\&freebsd,$ARGV[0]);
-	$thrs[$here++] = threads->new(\&gentoo, $ARGV[0]);
-	$thrs[$here++] = threads->new(\&netbsd, $ARGV[0]);
-	$thrs[$here++] = threads->new(\&openbsd,$ARGV[0]);
-	$thrs[$here++] = threads->new(\&slack,  $ARGV[0]);
-	$thrs[$here++] = threads->new(\&sm,     $ARGV[0]);
+	$thrs[$here++] = threads->new(\&arch,        $ARGV[0]);
+	$thrs[$here++] = threads->new(\&aur,         $ARGV[0]);
+	$thrs[$here++] = threads->new(\&debian,      $ARGV[0]);
+	$thrs[$here++] = threads->new(\&fedora_wget, $ARGV[0]);
+	$thrs[$here++] = threads->new(\&freebsd,     $ARGV[0]);
+	$thrs[$here++] = threads->new(\&gentoo,      $ARGV[0]);
+	$thrs[$here++] = threads->new(\&netbsd,      $ARGV[0]);
+	$thrs[$here++] = threads->new(\&openbsd,     $ARGV[0]);
+	$thrs[$here++] = threads->new(\&slack,       $ARGV[0]);
+	$thrs[$here++] = threads->new(\&sm,          $ARGV[0]);
 	foreach (@thrs) {
 		$_->join;
 	}
@@ -63,6 +64,127 @@ if (@ARGV == 1) {
 	die "Too many parameters. Usage: $0 pkgname\n";
 }
 
+
+sub fedora_write {
+	my $file = $_[1];
+	my $arch = $_[2];
+	my @names;
+	my @versions;
+	my @dates;
+	my @sizes;
+	my @repos;
+	
+	my $baseurl = "ftp://download.fedora.redhat.com/pub/fedora/linux";
+	my $tempfile = "$file.tmp";
+	
+	if (-s $file && ($_[0]==0 || ($_[3]==1 && `date -Idate` =~ (split / /, `ls -l $file`)[6]))) {
+		# read in
+		open IN, $file;
+		chomp (my @inlines = <IN>);
+		close IN;
+		foreach (@inlines) {
+			my @parts = split /\t/,$_;
+			push @names,    $parts[0];
+			push @versions, $parts[1];
+			push @dates,    $parts[2];
+			push @sizes,    $parts[3];
+		}
+	} else {
+		#download
+		system "wget -q $baseurl".$_[0]." -O $tempfile";
+		open IN, "$tempfile";
+		chomp (my @lines = <IN>);
+		close IN;
+		system "rm $tempfile";
+		my $here = 0;
+		for (my $i = 0; $i < @lines; $i++) {
+			if ($lines[$i] =~ /^  200/) {
+				($names[$here],$versions[$here],$dates[$here],$sizes[$here]) = &fedora_analyse($lines[$i],$arch);
+				$here++;
+			}
+		}
+		open OUT, ">$file";
+		for (my $a = 0; $a < @names; $a++) {
+			print OUT "$names[$a]\t$versions[$a]\t$dates[$a]\t$sizes[$a]\n";
+		}
+		close OUT;
+	}
+	foreach (@names) {
+		push @repos, $_[4];
+	}
+	return(\@names,\@versions,\@dates,\@sizes,\@repos);
+}
+
+sub fedora_analyse {
+	my $arch = $_[1];
+	my $size = (split /\(|\)/, $_[0])[1];
+	$size =~ s/ bytes$//;
+	my $date = join " ", reverse ((split / +/, $_[0])[1..3]);
+	chomp ($date = `date -d \"$date\" -Idate`);
+	my $nad = (split /">|\.rpm/, $_[0])[2];
+	$nad =~ s/\.$arch//g;
+	my ($name,$version) = &combos($nad);
+	return ($name,$version,$date,$size);
+}
+
+sub fedora_wget {
+	my $current_release = 4;
+	my $distroname = "fc";
+	my $arch = "i386";
+	my @ininames;
+	my @iniversions;
+	my @inidates;
+	my @inisizes;
+	my @inirepos;
+	for (my $i = 4; $i <= $current_release; $i++) { # just the one release for now
+		my @fed_repos = ("core","updates","extras");
+		my @fed_updates = (0,1,1); #whether to ask for an update or not
+		my @fed_urls = ("/core/$i/i386/os/Fedora/RPMS/","/core/updates/$i/$arch/","/extras/$i/$arch/");
+		for (my $a = 0; $a < @fed_repos; $a++) {
+			my $file = "$confdir/$distroname.$i.".$fed_repos[$a].".list";
+			my ($p1,$p2,$p3,$p4,$p5) = &fedora_write($fed_urls[$a],$file,$arch,$fed_updates[$a],$fed_repos[$a]);
+			push @ininames,    @$p1;
+			push @iniversions, @$p2;
+			push @inidates,    @$p3;
+			push @inisizes,    @$p4;
+			push @inirepos,    @$p5;
+		}
+	}
+	my @names;
+	my @repos;
+	my @sizes;
+	my @versions;
+	my @dates;
+	my @urls;
+	for (my $i = 0; $i < @ininames;$i++) {
+		my $mustmatch = $_[0];
+		if ($ininames[$i] =~ /$mustmatch/) {
+			push @names,    $ininames[$i];
+			push @repos,    $inirepos[$i];
+			push @dates,    $inidates[$i];
+			push @versions, $iniversions[$i];
+			push @sizes,    $inisizes[$i];
+			push @urls, "";
+		}
+		# remove all that are the same
+		for (my $i = 0; $i < @names; $i++) {
+			for (my $a = $i + 1; $a < @names; $a++) {
+				if ($names[$i] eq $names[$a]) {
+					splice (@names,    $i, 1);
+					splice (@versions, $i, 1);
+					splice (@dates,    $i, 1);
+					splice (@sizes,    $i, 1);
+					splice (@repos,    $i, 1);
+					splice (@urls,     $i, 1);
+				}
+			}
+		}
+	}
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Fedora",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+	return ();
+}
 
 
 sub freebsd {
@@ -87,7 +209,7 @@ sub freebsd {
 		}
 	}
 	for (my $i = 0; $i < @repos; $i++) {
-		&pretty_print($cols,@columns,"FreeBSD 5",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+		&pretty_print($cols,@columns,"FreeBSD",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
 	return ();
 }
@@ -105,8 +227,6 @@ sub combos {
 	}
 	return($name,$version);
 }
-
-
 
 
 sub sm {
@@ -139,10 +259,12 @@ sub sm {
 	my @repos    = @$p5;
 	my @urls     = @$p6;
 	for (my $i = 0; $i < @repos; $i++) {
-		&pretty_print($cols,@columns,"Src Mage",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+		&pretty_print($cols,@columns,"SMGL",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
 	return ();
 }
+
+
 sub search_by_name { # versions, sizes, dates, repos, urls
 	my ($p1,$p2,$p3,$p4,$p5,$p6,$search) = @_;
 	my @ininames    = @$p1;
@@ -271,7 +393,6 @@ sub openbsd {
 	}
 	return ();
 }
-
 
 sub gentoo {
 	my @names;
@@ -506,7 +627,7 @@ sub fetchdoc {
 			last;
 		} elsif ($count > 4) {   # loop termination condition
 			unless ($silent == 1) {
-				print ("Tried fetching \"$url\" five times for $_[1]. Giving up.\n"); #TODO shouldn't this be "warn"?
+				print ("Tried fetching \"$url\" five times for $_[1]. Giving up.\n");
 			}
 			return ();
 			last;
@@ -627,3 +748,6 @@ sub template_listing {
 	}
 	return ();
 }
+
+
+
