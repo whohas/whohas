@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<title>Philipp's Homepage: whohas</title>
+<meta name=description content="whohas is a script to query Linux package databases.">
+<meta name=keywords content="package management, command line tool, script, perl, pkgbuild, ebuild, cut, grep, debian, gentoo, slackware, arch">
+<link rel="stylesheet" type="text/css" href="../gainsboro.css">
+</head>
+<body>
+<div id=hd>
+<a name="top"><h1 class=top>Philipp Wesche's</h1></a>
+<p id=mu> <a href="../profile.htm">profile</a> &nbsp; <a href="../writings.html" class=ex>articles</a> &nbsp; <a href="../cv.html" class=ex>CV</a> &nbsp; <a href="../dc.html" class=ex>disclaimer</a> &nbsp; <a href="../ad.html">contact</a> &nbsp; <a href="../../old1/index.html" class=ex>old site</a></p>
+</div>
+<div id=main>
+<h2>whohas 0.1</h2>
+<p>whohas is a command line tool that allows querying several package lists at once - currently supported are Arch, Debian, Gentoo and Slackware. whohas is written in Perl and was designed to help package maintainers find ebuilds, pkgbuilds and similar package definitions from other distributions to learn from. However, it can also be used by normal users who want to know:</p>
+<ul>
+<li>Which distribution provides packages on which the user depends.</li>
+<li>What version of a given package is in use in each distribution, or in each release of a distribution (implemented only for Debian).</li>
+</ul>
+<p>whohas gives urls to more details about the package. I recommend using a terminal that recognises hyperlinks and allows easy forwarding to the browser.</p>
+<p>You can use grep to improve your search results:</p>
+<blockquote>whohas gimp | grep " gimp "</blockquote>
+<p>The spaces will ensure that only results for the package gimp are displayed, not for gimp-print etc.</p>
+<blockquote>whohas gimp | grep Arch</blockquote>
+<blockquote>whohas gimp | grep -i arch</blockquote>
+Either one of the above will display results for Arch Linux only. If you are interested in the search term or package arch, and want results for Arch Linux only,
+<blockquote>whohas arch | grep "^Arch"</blockquote>
+<p><a href="whohas_example.txt">Example output</a></p><p>
+<p>The first column is the name of the distribution, the second the name of the package, the third the version number, then the date, repository name and a url linking to more information about the package. Future versions will have package size information, too. Column lengths are fixed, so you can use cut:</p>
+<blockquote>whohas vim | grep " vim " | cut -b 36-45</blockquote>
+<p>The first bytes of the data fields at the time of writing are 11, 37, 48, 59 and 71.</p>
+<p>I would like to encourage distributors at this time to provide web query interfaces to package lists, and specifically provide the following information: package name, version, date, size and a url to further information (maintainer, build information etc.)</p>
+<p>Additional remarks: Debian refers to the binary distribution. Slackware queries Current only. All details (including availability, version numbers and binary sizes) are for the x86 architecture, although this cannot be assured for either Debian or Gentoo in the current version of whohas. I recommend you consult the URLs provided in the output.</p>
+<p>Historical remark: whohas started life as whichdistro.pl, but its author preferred the shorter, hopefully more memorable name which is more conducive to word play.</p>
+<p><b>Bug reports</b> may be sent to phi1ipp@yahoo.com.</p>
+</body>
+</html>

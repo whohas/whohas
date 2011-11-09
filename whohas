@@ -1,0 +1,386 @@
+#!/usr/bin/perl
+
+# whohas, a Perl utility to display availability of source
+# and binary packages from major Linux distributions
+#
+# Copyright (C) Philipp L. Wesche 2005
+#
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+
+
+use strict;
+use sigtrap;
+
+my $archbase   = "http://www.archlinux.org";
+my $aurbase    = "http://aur.archlinux.org";
+my $debianbase = "http://packages.debian.org";
+my $slackbase  = "http://slackware.it/en/pb";
+my $gentoobase = "http://packages.gentoo.org";
+my $fedorabase = "http://download.fedora.redhat.com/pub/fedora/linux";
+
+use Env qw(HOME);
+my $confdir = "$HOME/.whohas";
+
+my @columns = (9,25,10,4,10,11);
+my $cols = 6;
+
+
+if (@ARGV == 1) {
+	&print_arch  ($ARGV[0]);
+	&print_aur   ($ARGV[0]);
+	&print_debian($ARGV[0]);
+	&print_gentoo($ARGV[0]);
+	&print_slack ($ARGV[0]);
+} else {
+	die "Too many parameters. Usage: $0 pkgname\n";
+}
+
+
+sub print_arch {
+	my ($p1,$p2,$p3,$p4,$p5,$p6) = &arch($_[0]);
+	my @names    = @$p1;
+	my @versions = @$p2;
+	my @sizes    = @$p3;
+	my @dates    = @$p4;
+	my @repos    = @$p5;
+	my @urls     = @$p6;
+
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Arch",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+}
+
+sub print_aur {
+	my ($p1,$p2,$p3,$p4,$p5,$p6) = &aur($_[0]);
+	my @names    = @$p1;
+	my @versions = @$p2;
+	my @sizes    = @$p3;
+	my @dates    = @$p4;
+	my @repos    = @$p5;
+	my @urls     = @$p6;
+
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Arch",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+}
+
+sub print_debian {
+	my ($p1,$p2,$p3,$p4,$p5,$p6) = &debian($_[0]);
+	my @names    = @$p1;
+	my @versions = @$p2;
+	my @sizes    = @$p3;
+	my @dates    = @$p4;
+	my @repos    = @$p5;
+	my @urls     = @$p6;
+
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Debian",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+}
+
+sub print_gentoo {
+	my ($p1,$p2,$p3,$p4,$p5,$p6) = &gentoo($_[0]);
+	my @names    = @$p1;
+	my @versions = @$p2;
+	my @sizes    = @$p3;
+	my @dates    = @$p4;
+	my @repos    = @$p5;
+	my @urls     = @$p6;
+
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Gentoo",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+}
+
+sub print_slack {
+	my ($p1,$p2,$p3,$p4,$p5,$p6) = &slack($_[0]);
+	my @names    = @$p1;
+	my @versions = @$p2;
+	my @sizes    = @$p3;
+	my @dates    = @$p4;
+	my @repos    = @$p5;
+	my @urls     = @$p6;
+
+	for (my $i = 0; $i < @repos; $i++) {
+		&pretty_print($cols,@columns,"Slackware",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+	}
+}
+
+sub gentoo {
+	my @names;
+	my @versions;
+	my @urls;
+	my @dates;
+	my @lines = split /\n/, &fetchdoc($gentoobase."/search/?sstring=".$_[0]);
+	my $name;
+	my @repos;
+	my @sizes;
+	for (my $i = 400; $i < @lines; $i++) { # 400 is a speed compromise
+		if ($lines[$i] eq '<table class="ebuild">') {
+			$name = (split /fields">|<\/td/, $lines[$i+1])[1];
+		} elsif ($lines[$i] =~ /th class="releases/) {
+			push @names, $name;
+			my @parts = split /href="|" title="|">|<\/a/, $lines[$i];
+			push @urls, $parts[2];
+			$parts[3] =~ s/ ..:..:..\.00//;
+			push @dates,    $parts[3];
+			push @versions, $parts[4];
+			push @repos, "";
+			push @sizes, "";
+		}
+	}
+	my @dates = &date_turn(@dates);
+	return (\@names,\@versions,\@sizes,\@dates,\@repos,\@urls);
+}
+
+sub date_turn {
+	my @res;
+	foreach (@_) {
+		my @parts = split /-/, $_;
+		push @res, "$parts[2]"."-$parts[1]"."-$parts[0]";
+	}
+	return @res;
+}
+
+
+
+sub slack {
+	my @repos;
+	my @names;
+	my @versions;
+	my @urls;
+	my @combos;
+	my @sizes;
+	my @dates;
+	my @lines = split /\n|<br>|<\/td>/, &fetchdoc($slackbase."/searchpkg.php?v=current&string=".$_[0]);
+	my $repo;
+	for (my $i = 0; $i < @lines; $i++) {
+		if ($lines[$i] =~ /Found [123456789][0-9]* results/) {
+			chop ($repo = (split /results in |\/<br>/, $lines[$i])[1]);
+		} elsif ($lines[$i] =~ /<td nowrap>\[/) {
+			push @repos, $repo;
+			my @parts = split /a href="|"><b>|<\/b>/, $lines[$i];
+			push @combos, $parts[4];
+			push @urls, $parts[3];
+			push @dates, "";
+			push @sizes, "";
+		}
+	}
+	foreach (@combos) {
+		$_ =~ s/\/[a-z0-9-]+\///; # dropping some package group information here, could be used...
+		my @chars = split //, $_;
+		for (my $i = 0; $i < @chars-1; $i++) {
+			if ($chars[$i] eq "-" && $chars[$i+1] =~ /[0-9]/) {
+				push @names, join "", @chars[0..($i-1)];
+				push @versions, join "", @chars[($i+1)..(@chars-1)];
+				last;
+			}
+		}
+	}
+	return (\@names,\@versions,\@sizes,\@dates,\@repos,\@urls);
+}
+
+sub debian {
+	my @names;
+	my @repos;
+	my @versions;
+	my @urls;
+	my @sizes;
+	my @dates;
+	my @lines = split /\n/, &fetchdoc($debianbase."/cgi-bin/search_packages.pl?version=all&subword=1&exact=&arch=any&releases=all&case=insensitive&keywords=".$_[0]."&searchon=names");
+	for (my $i = 50; $i < @lines; $i++) {
+		if ($lines[$i] =~ /<h3>Package/) {
+			my $name = (split /h3>Package |<\/h3>/, $lines[$i])[1];
+			my $a = $i+2;
+			my $have_version = 1;
+			for (;$a < @lines;$a++) {
+				if ($lines[$a] =~ /^<li>/) {
+					my @parts = split /href="|">|<\/a/, $lines[$a];
+					push @names, $name;
+					push @repos, $parts[2];
+					push @urls,  $debianbase.$parts[1];
+					push @sizes, "";
+					push @dates, "";
+					$have_version = 0;
+				} elsif ($lines[$a] =~ /^<br>/) {
+					if ($have_version == 0) {
+						my @parts = split />|:/, $lines[$a];
+						push @versions, $parts[1];
+					}
+					$have_version = 1;
+				} elsif ($lines[$a+1] =~ /<h3/) {
+					last;
+				}
+			}
+			$i = $a;
+		}
+	}
+	return (\@names,\@versions,\@sizes,\@dates,\@repos,\@urls);
+}
+
+sub aur {
+	my $stop;
+	my @lines = split /\n/, &fetchdoc($aurbase."/packages.php?PP=1000&K=".$_[0]); # 1000 should be enough
+
+	my @repos;
+	my @names;
+	my @versions;
+	my @combos;
+	my @dates;
+	my @urls;
+	my @sizes;
+	my @dates;
+	my $indicator = 0;
+	for (my $i = 100; $i < @lines; $i++) {  # 100 is a compromise between safety and efficiency
+		if ($lines[$i] =~ /<td class='data/) {
+			$indicator++;
+			if ($indicator == 1) {
+				push @repos,    &arch_site_get_cont($lines[$i]);
+				push @sizes, "";
+				push @dates, "";
+			} elsif ($indicator == 3) {
+				push @combos,    &arch_site_get_cont($lines[$i]);
+				push @urls,      $aurbase.&aur_site_get_url ($lines[$i]);
+			} elsif ($indicator == 6) {
+				$indicator = 0;
+			}
+			# 2 is package group, 4 is votes, 5 is description, 6 is maintainer
+		}
+	}
+	foreach (@combos) {
+		my @units = split / /, $_;
+		push @names,    $units[0];
+		push @versions, $units[1];
+	}
+	return (\@names,\@versions,\@sizes,\@dates,\@repos,\@urls);
+}
+
+sub arch {
+	my $stop;
+	my @lines = split /\n/, &fetchdoc($archbase."/packages.php?pp=1000&s_keyword=".$_[0]); # 1000 should be enough
+	for (my $i = @lines - 1; $i > 0; $i--) {   # $stop was 865 when I wrote this, total file was only 903
+		if ($lines[$i] eq "\t\t</tr></table>\t\t</td>") {
+			$stop = $i;
+			last;
+		}
+	}
+
+	my @repos;
+	my @names;
+	my @versions;
+	my @dates;
+	my @urls;
+	my @sizes;
+	my $indicator = 0;
+	for (my $i = 380; $i < $stop; $i++) {  # 380 is a compromise between safety and efficiency
+		if ($lines[$i] =~ /<td class="data/) {
+			$indicator++;
+			if ($indicator == 1) {
+				push @repos,    &arch_site_get_cont($lines[$i]);
+			} elsif ($indicator == 3) {
+				push @names,    &arch_site_get_cont($lines[$i]);
+				push @urls,     $archbase.&arch_site_get_url ($lines[$i]);
+			} elsif ($indicator == 4) {
+				push @versions, &arch_site_get_cont($lines[$i]);
+			} elsif ($indicator == 6) {
+				push @dates,    &arch_site_get_cont($lines[$i]);
+				push @sizes, "";
+				$indicator = 0;
+			}
+			# 2 is package group, 5 is description
+		}
+	}
+	my @dates = &date_turn(@dates);
+	return (\@names,\@versions,\@sizes,\@dates,\@repos,\@urls);
+}
+
+
+
+
+sub arch_site_get_cont {
+	my @parts = split />/, $_[0];
+	for (my $i = 0; $i < @parts; $i++) {
+		if ($parts[$i] =~ /^[A-Za-z0-9]/) {
+			return (split /</, $parts[$i])[0];
+		}
+	}
+}
+
+sub arch_site_get_url {
+	return ((split /a href='|'>/, $_[0])[1]);
+}
+
+sub aur_site_get_url {
+	return ((split /a href='|&O=/, $_[0])[1]);
+}
+
+
+sub fetchdoc {
+	use LWP::UserAgent;
+
+	my $url = $_[0];
+
+	$url =~ s/\&amp\;/\&/ig;   # convert &amp; to &
+
+	my $ua = LWP::UserAgent->new;
+        my @firstline;
+        my @response;
+        for (my $count = 0; ; ++$count) {   # termination condition inside loop
+                my $req = HTTP::Request->new(GET => $url);
+                my $res = $ua->request($req)->as_string;
+                @response = split (/\n/, $res);
+                @firstline = split (/ /, $response[0]);
+		my $restest = 0;
+		if (@firstline == 3) {
+			$restest = $firstline[1];
+		} elsif (@firstline > 3) {
+			$restest = $firstline[0];
+		} elsif (@firstline < 3) {
+			print ("Server response: $response[0]\ndid not have the anticipated format.");
+		}
+		if ($restest == 200) {
+		# server response 200 is a stringent criterion, but should work
+			last;
+		} elsif ($count > 4) {   # loop termination condition
+			print ("Tried fetching \"$url\" five times for $_[1]. Giving up.\n");
+			return ();
+			last;
+		}
+	}
+        my $end = @response - 1;
+        my $finaldoc = join ("\n", @response[14..$end]);
+        return ($finaldoc);
+}
+
+sub pretty_print {
+	my $n = $_[0];
+	my @colwidths = @_[1..$n];
+	my @colvals = @_[($n+1)..(@_-1)];
+	for (my $i = 0; $i < @colwidths;$i++) {
+		if (length($colvals[$i]) > $colwidths[$i]) {
+			my @letters = split //, $colvals[$i];
+			print join "", @letters[0..($colwidths[$i]-1)];
+			print " ";
+		} else {
+			print $colvals[$i];
+			for (my $a = 0; $a < $colwidths[$i] + 1 - length($colvals[$i]); $a++) {
+				print " ";
+			}
+		}
+	}
+	print $colvals[@colvals-1]."\n"; #last column is unrestricted in length
+}
