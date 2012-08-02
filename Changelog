@@ -1,3 +1,22 @@
+0.29
+
+fixed AUR module
+
+fixed Mandriva module
+
+fixed a problem with openBSD URL construction
+
+added new Slackware module to replace the previous one which queried a now-defunct (third party) web interface
+
+code cleanup
+
+implemented functionality suggested by Guillaume Delacour and Steve Cotton
+
+updated to current version numbers of Ubuntu, Mandriva, openSUSE, OpenBSD, Fedora, Slackware (13.1 not 13.37 as we're waiting on linuxpackages.net to update their search interface)
+
+NB: Fedora and openSUSE seem currently not to be working; Mandriva shows only first ten results returned by sophie.zarb.org
+
+
 0.24
 
 Cygwin module added
