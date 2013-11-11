@@ -433,7 +433,7 @@ sub freebsd {
 			my @subparts = split /\//, $parts[3];
 			push @sizes, "";
 			push @repos, $subparts[@subparts-2];
-			push @urls,  "http://www.freebsd.org/cgi/pds.cgi?ports/".$subparts[@subparts-2]."/".$names[$now];
+			push @urls,  "http://www.freebsd.org/cgi/ports.cgi?stype=all&query=$names[$now]";
 			$now++;
 			push @dates, "";
 		}
