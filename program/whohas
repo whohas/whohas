@@ -611,7 +611,7 @@ sub openbsd_newer {
 			}
 		}
 		open OUT, ">$file";
-		for (my $i = 0; $i < @urls;$i++) {
+		for (my $i = 0; $i < @names;$i++) {
 			print OUT "$names[$i]\t$versions[$i]\t$dates[$i]\t$sizes[$i]\n";
 		}
 		close OUT;
