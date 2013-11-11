@@ -712,6 +712,7 @@ sub cygwin {
 
 sub gentoo {
 	my $gentoobase = "http://gentoo-portage.com";
+	my $gentoobaseofficial = "http://packages.gentoo.org/package";
 	my $distroname = "Gentoo";
 	my @names;
 	my @versions;
@@ -733,6 +734,7 @@ sub gentoo {
 						my @dosparts = split /\//, $parts[1];
 						$dosparts[1] =~ / +$/;
 						my $tempurl = $gentoobase."/".$dosparts[0]."/".$dosparts[1];
+						my $officialurl = $gentoobaseofficial."/".$dosparts[0]."/".$dosparts[1];
 						my @newlines = split /\n/, &fetchdoc($tempurl);
 						for (my $li = 0; $li < @newlines; $li++) {
 							if ($newlines[$li] =~ /\<li class\=\"[a-z]+ebuildrow\"/) {
@@ -745,7 +747,7 @@ sub gentoo {
 								}
 								push @names, $dosparts[1];
 								push @groups, $dosparts[0];
-								push @urls, $tempurl;
+								push @urls, $officialurl;
 								push @versions, $vernum;
 								push @repos, "";
 								push @sizes, "";
