@@ -666,7 +666,7 @@ sub openbsd_older {
 		close OUT;
 	}
 	my $matcher = $_[0];
-	for (my $i = 0; $i < @repos; $i++) {
+	for (my $i = 0; $i < @names; $i++) {
 		if ($names[$i] =~ /$matcher/i) {
 			&pretty_print($cols,@columns,$distroname,$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 		}
