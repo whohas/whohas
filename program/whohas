@@ -71,11 +71,19 @@ my $here = 0;
 my @distroSelections;
 my $nothreads;
 my $shallow;
+my $option_help;
+
 GetOptions(
 	"d=s" => \@distroSelections,
 	"no-threads" => \$nothreads,
-	"shallow" => \$shallow
+	"shallow" => \$shallow,
+	"help|usage|h" => \$option_help,
 );
+
+if ($option_help) {
+	print "Usage: $0 [--no-threads] [--shallow] [-d Dist1[,Dist2[,Dist3...]]] pkgname\n";
+	exit 0;
+}
 
 if (@ARGV > 1) {
 	die "Error:\tToo many parameters. Usage: $0 [--no-threads] [--shallow] [-d Dist1[,Dist2[,Dist3...]]] pkgname\n";
