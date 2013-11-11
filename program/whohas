@@ -1041,7 +1041,6 @@ sub aur {
 	my @dates;
 	my @urls;
 	my @sizes;
-	my @dates;
 	my $indicator = 0;
 	for (my $i = 100; $i < @lines; $i++) {  # 100 is a compromise between safety and efficiency
 		if ($lines[$i] =~ /<td class='data/) {
