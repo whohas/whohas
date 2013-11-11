@@ -938,7 +938,7 @@ sub debian_size_convert {
 }
 
 sub debian {
-	my @dists = ( 'stable', 'testing' );
+	my @dists = ( 'all' );
 	&debuntu('http://packages.debian.org','Debian',\@dists,$_[0]);
 	return();
 }
