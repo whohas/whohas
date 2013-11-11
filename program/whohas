@@ -51,7 +51,7 @@ my @columns = (11,38,18,4,10,25);
 my $cols = 6;
 
 my $fedora_release		 =  16			;
-my $ubuntu_current_release	 = "oneiric"		;
+my $ubuntu_current_release	 = "all"		;
 my $opensuse_major		 = "12"			;
 my $opensuse_minor		 = "1"			;
 my $mandrivaVersion		 = "2011.0"		;
@@ -964,17 +964,31 @@ sub debuntu {
 		for (my $i = 50; $i < @lines; $i++) {
 			if ($lines[$i] =~ /<h3>Package /) {
 				my $name = (split /h3>Package |<\/h3>/, $lines[$i])[1];
-				push @names, $name;
-				my @parts = split /href\=\"|\"\>|<\/a\>/, $lines[$i+3];
-				$parts[4] =~ s/ \(|\)://g;
-				push @groups, $parts[4];
-				push @repos, $dists[$x];
-				push @urls,  $baseurl.$parts[2];
-				push @dates, "";
-				@parts = split />|: /, $lines[$i+6];
-				$parts[1] =~ s/ \[\<strong.*//;
-				push @versions, $parts[1];
-				$i += 11;
+				# There are now one or more 8-line blocks that are approximately
+				# $lines[$i]   <li class="intrepid"><a class="resultlink" href="/intrepid/dpkg">intrepid</a> (base):
+				# $lines[$i+3] <br>1.14.20ubuntu6: amd64 i386
+				# And this list starts with <ul> and ends with </ul>
+				$i += 1;
+				while (($lines[$i] !~ '</ul>') && ($i < @lines)) {
+					if ($lines[$i] =~ /class="resultlink"/) {
+						push @names, $name;
+						my @parts = split /href\=\"|\"\>|<\/a\>/, $lines[$i];
+						$parts[4] =~ s/ \(|\)://g;
+						push @groups, $parts[4];
+						push @repos, $dists[$x];
+						push @urls,  $baseurl.$parts[2];
+						push @dates, "";
+						my $vline = $lines[$i+3];
+						# prune possibly existing link to backports
+						$vline =~ s/ *\[.*strong.*\]//g;
+						# Split lines e.g. "0.8.4-3+squeeze1: all"
+						@parts = split />|: /, $vline;
+						push @versions, $parts[1];
+						$i += 4; # do not be too greedy
+					} else {
+						$i += 1;
+					}
+				}
 			}
 		}
 	}
