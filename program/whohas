@@ -72,21 +72,23 @@ my @distroSelections;
 my $nothreads;
 my $shallow;
 my $option_help;
+my $option_strict;
 
 GetOptions(
 	"d=s" => \@distroSelections,
 	"no-threads" => \$nothreads,
 	"shallow" => \$shallow,
 	"help|usage|h" => \$option_help,
+	"strict|s" => \$option_strict,
 );
 
 if ($option_help) {
-	print "Usage: $0 [--no-threads] [--shallow] [-d Dist1[,Dist2[,Dist3...]]] pkgname\n";
+	print "Usage: $0 [--no-threads] [--shallow] [--strict] [-d Dist1[,Dist2[,Dist3...]]] pkgname\n";
 	exit 0;
 }
 
 if (@ARGV > 1) {
-	die "Error:\tToo many parameters. Usage: $0 [--no-threads] [--shallow] [-d Dist1[,Dist2[,Dist3...]]] pkgname\n";
+	die "Error:\tToo many parameters. Usage: $0 [--no-threads] [--shallow] [--strict] [-d Dist1[,Dist2[,Dist3...]]] pkgname\n";
 } elsif (@ARGV < 1) {
 	die "Error:\tPlease specify a search term.\n";
 }
@@ -1172,6 +1174,9 @@ sub fetchdoc {
 }
 
 sub pretty_print {
+	if( $option_strict && trim($_[$cols+2]) ne $ARGV[0]) {
+		return; # strictness enabled, we should print exact matches only
+	}
 	my $n = $_[0];
 	my @colwidths = @_[1..$n];
 	my @colvals = @_[($n+1)..(@_-1)];
@@ -1188,6 +1193,15 @@ sub pretty_print {
 		}
 	}
 	print $colvals[@colvals-1]."\n"; #last column is unrestricted in length
+}
+
+sub trim($) {
+	# Perl trim function to remove whitespace from the start and end of the
+	# string
+	my $string = shift;
+	$string =~ s/^\s+//;
+	$string =~ s/\s+$//;
+	return $string;
 }
 
 sub prep_suse_repo {

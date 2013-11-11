@@ -1,35 +1,38 @@
 .TH "whohas" "1" "0.29" "Philipp Wesche" ""
 .SH "NAME"
-.LP 
+.LP
 whohas \- findet Pakete in verschiedenen Repositories
 .SH "SYNTAX"
-.LP 
-whohas [\fI\-\-no\-threads\fP] [\fI\-d Dist1[,Dist2[,Dist3 etc.]]\fP] \fIpkgname\fP
+.LP
+whohas [\fI\-\-no\-threads\fP] [\fI\-\-shallow\fP] [\fI\-\-strict\fP] [\fI\-d Dist1[,Dist2[,Dist3 etc.]]\fP] \fIpkgname\fP
 .SH "BESCHREIBUNG"
-.LP 
+.LP
 whohas ist ein Kommandozeilenprogramm, das verfügbare Pakete von Arch, Debian, Fedora, Gentoo, Mandriva, openSUSE, Slackware (and linuxpackages.net), Source Mage, Ubuntu, FreeBSD, NetBSD, OpenBSD, Fink, MacPorts und Cygwin findet, die einem Suchbegriff entsprechen.
 .SH "OPTIONEN"
-.LP 
-.TP 
+.LP
+.TP
 \fB\-\-no\-threads\fR
 Keine Threads bei der Ausführung, Repositories werden seriell nacheinander befragt und jeweils die Antwort abgewartet (sehr viel langsamer)
-.TP 
+.TP
 \fB\-\-shallow\fR
 Nur ein Aufruf pro Server. Bietet weniger Informationen, ist aber schneller. Typischerweise sind Informationen über Größe und Release-Datum der Pakete betroffen.
-.TP 
+.TP
+\fB\-\-strict\fR
+Listet nur die Pakete, die genau \fIpkgname\fP haben wie ihr Name.
+.TP
 \fB\-d Dist1[,Dist2[,Dist3 etc.]]\fR
 Durchsucht nur aufgelistete Distributionen. Gültige Angaben für Dist1 etc. sind "archlinux", "cygwin", "debian", "fedora", "fink", "freebsd", "gentoo", "macports", "mandriva", "netbsd", "openbsd", "opensuse", "slackware", "sourcemage", und "ubuntu".
-.TP 
+.TP
 \fBpkgname\fR
 Suchbegriff
 .SH "DATEIEN"
 .LP
 whohas speichert Cachedateien für einige Repositories in ~/.whohas
 .SH "SIEHE AUCH"
-.LP 
+.LP
 \fIintro.txt\fP und \fI/usr/share/doc/whohas/intro.html\fP sind alternative Quellen über whohas.
 .SH "AUTOR"
-.LP 
+.LP
 whohas wird von Philipp Wesche <phi1ipp@yahoo.com> entwickelt.
-.LP 
+.LP
 Diese Dokumentation wurde von Philipp Wesche <phi1ipp@yahoo.com> geschrieben, basierend auf einer Vorlage von Jonathan Wiltshire <debian@jwiltshire.org.uk> für das Debian Projekt.

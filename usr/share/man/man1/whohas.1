@@ -1,32 +1,35 @@
 .TH "whohas" "1" "0.29" "Jonathan Wiltshire" ""
 .SH "NAME"
-.LP 
+.LP
 whohas \- find packages in various distributions' repositories
 .SH "SYNTAX"
-.LP 
-whohas [\fI\-\-no\-threads\fP] [\fI\-\-shallow\fP] [\fI\-d Dist1[,Dist2[,Dist3 etc.]]\fP] \fIpkgname\fP
+.LP
+whohas [\fI\-\-no\-threads\fP] [\fI\-\-shallow\fP] [\fI\-\-strict\fP] [\fI\-d Dist1[,Dist2[,Dist3 etc.]]\fP] \fIpkgname\fP
 .SH "DESCRIPTION"
-.LP 
+.LP
 whohas is a command line tool to query package lists from the Arch, Debian, Fedora, Gentoo, Mandriva, openSUSE, Slackware (and linuxpackages.net), Source Mage, Ubuntu, FreeBSD, NetBSD, OpenBSD, Fink, MacPorts and Cygwin distributions.
 .SH "OPTIONS"
-.LP 
-.TP 
+.LP
+.TP
 \fB\-\-no\-threads\fR
 Don't use multiple threads to query package lists (will be much slower)
-.TP 
+.TP
 \fB\-\-shallow\fR
 Limit to one call per server. Faster, but loses some information, typically package size and release date.
-.TP 
+.TP
+\fB\-\-strict\fR
+List only those packages that have exactly \fIpkgname\fP as their name.
+.TP
 \fB\-d Dist1[,Dist2[,Dist3 etc.]]\fR
 Queries only for packages for the listed distributions. Recognised values for Dist1, Dist2, etc. are "archlinux", "cygwin", "debian", "fedora", "fink", "freebsd", "gentoo", "mandriva", "macports", "netbsd", "openbsd", "opensuse", "slackware", "sourcemage", and "ubuntu".
-.TP 
+.TP
 \fBpkgname\fR
 Package name to query for
 .SH "FILES"
 .LP
 whohas uses various files in ~/.whohas to cache package lists for some distributions.
 .SH "SEE ALSO"
-.LP 
+.LP
 See \fIintro.txt\fP or \fIintro.html\fP notes on using whohas.
 .SH "AUTHORS"
 .LP 
