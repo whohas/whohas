@@ -1071,7 +1071,8 @@ sub aur {
 
 sub arch {
 	my $archbase   = "http://www.archlinux.org";
-	my @lines = split /\n/, &fetchdoc($archbase."/packages/?arch=i686&repo=&q=".$_[0]."&last_update=&limit=all");
+	# if we directly query i686, redirected to the specific package page
+	my @lines = split /\n/, &fetchdoc($archbase."/packages/?q=".$_[0]);
 
 	my @repos;
 	my @names;
@@ -1080,7 +1081,7 @@ sub arch {
 	my @urls;
 	my @sizes;
 	for (my $i = 0; $i < @lines; $i++) {
-		if ($lines[$i] =~ /\<tr class\=\"pkgr/) {
+		if ($lines[$i] =~ /\<tr class\=["'](?:odd|even)/) {
 			for (my $a = 2; $a < 11;$a++) {
 				my $temp = $lines[$a+$i];
 				$temp =~ s/.*\<td\>|\<\/td\>//g;
@@ -1090,13 +1091,12 @@ sub arch {
 					push @urls, $archbase.&arch_site_get_url ($lines[$i+$a]);
 					push @names, &arch_site_ger_cont($lines[$i+$a]);
 				} elsif ($a == 6) {
-					$temp =~ s/<span style=\".*\">|<\/span>//g;
 					push @versions, $temp;
-				} elsif ($a == 10) {
+				} elsif ($a == 9) {
 					push @dates,    $temp;
 				}
 			}
-			# 2 is package group, 5 is description
+			# 2 is architecture, 8 is description
 			push @sizes, "";
 			$i += 7;
 		}
@@ -1109,7 +1109,7 @@ sub arch {
 
 sub arch_site_get_url {
 	my $temp = $_[0];
-	$temp =~ s/.*\<a href=\"|\">.*//g;
+	$temp =~ s/.*\<a href=\"|\".*//g;
 	return $temp;
 }
 
