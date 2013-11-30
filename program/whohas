@@ -320,14 +320,14 @@ sub macports {
 
 
 sub fink {
-	my $baseurl = "http://fink.sourceforge.net/pdb/";
+	my $baseurl = "http://pdb.finkproject.org/pdb/";
 	my @names;
 	my @versions;
 	my @dates;
 	my @sizes;
 	my @repos;
 	my @urls;
-	my @lines = split /\n/, &fetchdoc($baseurl."browse.php?summary=".$_[0]);
+	my @lines = split /\n/, &fetchdoc($baseurl."browse.php?name=".$_[0]);
 	for (my $i = 60; $i < @lines; $i++) {
 		if ($lines[$i] =~ /tr class=\"package\"/) {
 			if ($lines[$i] =~ /^\<tr class\=\"pdbHeading\"\>/) {
