@@ -50,7 +50,7 @@ unless (-d $confdir) {
 my @columns = (11,38,18,4,10,25);
 my $cols = 6;
 
-my $fedora_release		 =  16			;
+my $fedora_release		 =  19			;
 my $ubuntu_current_release	 = "all"		;
 my $opensuse_major		 = "12"			;
 my $opensuse_minor		 = "1"			;
@@ -161,7 +161,7 @@ if (!$nothreads) {
 }
 
 sub fedora {
-	my $baseurl = "http://download.fedora.redhat.com/pub/fedora/linux/releases/";
+	my $baseurl = "http://dl.fedoraproject.org/pub/fedora/linux/releases/";
 	my $distroname = "Fedora";
 	my $arch = "i386";
 	my $searchy = $_[0];
@@ -171,7 +171,7 @@ sub fedora {
 	my @sizes;
 	my @repos;
 	my @urls;
-	for (my $i = 16; $i <= $fedora_release; $i++) { # just the one release for now
+	for (my $i = 19; $i <= $fedora_release; $i++) { # just the one release for now
 #		my @fed_repos = ("core","Everything");
 		my @fed_urls = ("$i/Everything/$arch/os/Packages/");
 		my $file = "$confdir/$distroname\_$i.list";
@@ -1157,7 +1157,7 @@ sub fetchdoc {
 			last;
 		} elsif ($count > 4) {   # loop termination condition
 			unless ($silent == 1) {
-				print ("Tried fetching \"$url\" five times. Giving up.\n");
+				warn ("Tried fetching \"$url\" five times. Giving up.\n");
 			}
 			return ();
 			last;
