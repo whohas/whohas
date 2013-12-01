@@ -47,8 +47,8 @@ unless (-d $confdir) {
 	mkdir ($confdir, 0755);
 }
 
-my @columns = (11,38,18,4,10,25);
-my $cols = 6;
+my @columns = (11,38,18,4,10,25,6);
+my $cols = 7;
 
 my $fedora_release		 =  19			;
 my $ubuntu_current_release	 = "all"		;
@@ -682,22 +682,25 @@ sub cygwin {
 	my @repos;
 	my @sizes;
 	my @dates;
+	my @archs;
 	my $distroname = "Cygwin";
 	my $searchy = $_[0];
 	my @lines = split /\n/, &fetchdoc($baseurl);
 	for (my $i = 0; $i < @lines; $i++) {
 		if ($lines[$i] =~ /$searchy/i && $lines[$i] =~ /ware\.org\/icons\/ba/) {
-			my $temp = (split /\"\>|\<\/a\>/, $lines[$i])[3];
+			my $temp = (split /href\=\"|\"\>/, $lines[$i])[2];
 			my @detailLines = split /\n/, &fetchdoc($baseurl.$temp);
 			my $highest = '';
 			for (my $a = 0; $a < @detailLines; $a++) { # incrementing ensures that the highest version number will prevail
 								   # (higher ones occur lower down at time of writing)
 				if ($detailLines[$a] =~ /<li><a href="/ && $detailLines[$a] !~ /\-src\<\/a\>\<\/li\>/) {
-					$highest = (split /<a href="|">/, $detailLines[$a])[1];
+					$highest = (split /<a href="|">/, $detailLines[$a])[1]; # due to server apache config currently only works when $arch eq 'x86_64' - more work needed
 				}
 			}
 			push @versions, (&combos($highest))[1];
-			push @names,    $temp;
+			my @comps = split /\//, $temp;
+			push @names,    $comps[1];
+			push @archs,    $comps[0];
 			push @dates,    '';
 			push @urls,     '';
 			push @sizes,    '';
@@ -705,7 +708,7 @@ sub cygwin {
 		}
 	}
 	for (my $i = 0; $i < @names; $i++) {
-		&pretty_print($cols,@columns,$distroname,$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+		&pretty_print($cols,@columns,$distroname,$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i],$archs[$i]);
 	}
 	return ();
 }
