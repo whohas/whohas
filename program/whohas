@@ -696,7 +696,7 @@ sub cygwin {
 }
 
 sub gentoo {
-	my $gentoobase = "http://gentoo-portage.com";
+	my $gentoobase = "http://gpo.zugaina.org/";
 	my $gentoobaseofficial = "http://packages.gentoo.org/package";
 	my $distroname = "Gentoo";
 	my @names;
