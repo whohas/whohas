@@ -184,6 +184,7 @@ sub fedora {
 						push @versions, $version;
 						push @dates, $date;
 						push @sizes, $size;
+						push @urls, "https://apps.fedoraproject.org/packages/$name";
 					}
 				}
 			}
