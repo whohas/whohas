@@ -35,7 +35,7 @@ use sigtrap;
 #TODO ubuntu: allow two releases: the long term supported and the most recent
 #TODO allow searching on several packages; return results only for those distros that have a hit for each package, possibly in tabular format
 #TODO deal gracefully with hyphens that may be present in some distros but not others, i.e. include extra hyphens in regexes, and allow user-specified hyphens to be absent
-#TODO fix fedora, opensuse
+#TODO fix opensuse
 
 use Env qw(HOME);
 use threads;
@@ -172,42 +172,22 @@ sub fedora {
 	my @repos;
 	my @urls;
 	for (my $i = 19; $i <= $fedora_release; $i++) { # just the one release for now
-#		my @fed_repos = ("core","Everything");
 		my @fed_urls = ("$i/Everything/$arch/os/Packages/");
 		my $file = "$confdir/$distroname\_$i.list";
-		# if the list file exists and is recent, use its contents, otherwise download and parse a fresh copy
-		if (-s $file && `date +%Y-%m-%d` =~ (split / /, `ls -l $file`)[6]) {
-			open IN, $file;
-			chomp (my @lines = <IN>);
-			for (my $i = 0; $i<@lines;$i++) {
-				($names[$i],$versions[$i],$sizes[$i],$dates[$i]) = split /\t/, $lines[$i];
-			}
-			close IN;
-		} else {
+		{
 			for (my $a = 0; $a < @fed_urls; $a++) {
-				my @lines = split /\n/, &fetchdoc($baseurl.$fed_urls[0]);
+				my @lines = split /\n/, &fetchdoc($baseurl.$fed_urls[$a].lc(substr($searchy, 0, 1)).'/');
 				for (my $li = 0; $li < @lines; $li++) {
-					if ($lines[$li] =~ /\/icons\/unknown\.gif/) {
-						my @parts = split /\<|\>|\"/, $lines[$li];
-						my $prev_release = $fedora_release - 1;
-						$parts[22] =~ s/\.fc($fedora_release|$prev_release).+//;
-						my ($name,$version) = &combos($parts[22]);
-						push @dates, &month_to_digits($parts[32]);
-						$parts[38] =~ s/^\s+//;
-						push @sizes, $parts[38];
+					if ($lines[$li] =~ /^ +<a href="/) {
+						my ($name, $version, $date, $size) = ($lines[$li] =~ m{ +<a href=['"](.+?)-([0-9].*)\.fc[0-9]*\.[^.]*\.rpm">[^<]*</a> *([^ ]* [^ ]*) *([^ ]*) *RPM Package});
 						push @names, $name;
 						push @versions, $version;
-						push @repos, "";
-						push @urls, "";
+						push @dates, $date;
+						push @sizes, $size;
 					}
 				}
 			}
 		}
-		open OUT, ">$file";
-		for (my $i = 0; $i < @urls;$i++) {
-			print OUT "$names[$i]\t$versions[$i]\t$sizes[$i]\t$dates[$i]\n";
-		}
-		close OUT;
 	}
 	for (my $i = 0; $i < @names; $i++) {
 		if ($names[$i] =~ /$searchy/i) {
