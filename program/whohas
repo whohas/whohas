@@ -50,7 +50,7 @@ unless (-d $confdir) {
 my @columns = (11,38,18,4,10,25);
 my $cols = 6;
 
-my $fedora_release		 =  19			;
+my $fedora_release		 =  20			;
 my $ubuntu_current_release	 = "all"		;
 my $opensuse_major		 = "12"			;
 my $opensuse_minor		 = "1"			;
