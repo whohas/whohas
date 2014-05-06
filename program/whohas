@@ -52,7 +52,7 @@ my $cols = 6;
 
 my $fedora_release		 =  20			;
 my $ubuntu_current_release	 = "all"		;
-my $opensuse_major		 = "12"			;
+my $opensuse_major		 = "13"			;
 my $opensuse_minor		 = "1"			;
 my $mandrivaVersion		 = "2011.0"		;
 my $openbsd_release		 = "5.5"		;
