@@ -37,8 +37,9 @@ use sigtrap;
 #TODO deal gracefully with hyphens that may be present in some distros but not others, i.e. include extra hyphens in regexes, and allow user-specified hyphens to be absent
 #TODO fix opensuse
 
+use Config;
 use Env qw(HOME);
-use threads;
+use if $Config{usethreads}, "threads";
 use Getopt::Long;
 
 my $confdir = "$HOME/.whohas";
@@ -91,6 +92,11 @@ if (@ARGV > 1) {
 	die "Error:\tToo many parameters. Usage: $0 [--no-threads] [--shallow] [--strict] [-d Dist1[,Dist2[,Dist3...]]] pkgname\n";
 } elsif (@ARGV < 1) {
 	die "Error:\tPlease specify a search term.\n";
+}
+
+if (!$Config{usethreads} && !$nothreads) {
+	$nothreads = 1;
+	warn "No threads support, --no-threads is forced.\n";
 }
 
 #
