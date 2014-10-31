@@ -5,3 +5,31 @@ fix repo string length for some osuse repos (e.g. in whohas whohas result)
 make extra columns for debian and ubuntu, to avoid inconveniencing everybody else
 
 fix slackware using http://packages.slackware.com/?search=foo http://packages.slackware.com/theme/slackware.xml
+
+Add more sites:
+
+http://chocolatey.org/
+http://brew.sh/
+http://www.sabayon.org/
+http://www.angstrom-distribution.org/
+http://www.openembedded.org/
+http://openmoko.org/
+http://openwrt.org
+http://www.emdebian.org/
+http://elinux.org/Embedded_Linux_Distributions
+http://www.linuxdevices.com/articles/AT2760742655.html
+http://freshmeat.net/
+http://directory.fsf.org/
+http://en.wikipedia.org/wiki/Comparison_of_free_software_hosting_facilities
+http://www.sisyphus.ru/
+http://savannah.gnu.org
+http://gna.org
+http://sourceforge.net
+http://www.berlios.de
+http://github.com
+http://gitorious.org
+http://www.ohloh.net
+http://code.google.com
+http://www.launchpad.net
+http://bitbucket.org
+http://transifex.net
