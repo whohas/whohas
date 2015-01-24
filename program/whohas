@@ -41,6 +41,7 @@ use Config;
 use Env qw(HOME);
 use if $Config{usethreads}, "threads";
 use Getopt::Long;
+use LWP::UserAgent;
 
 my $confdir = "$HOME/.whohas";
 # make .whohas directory in home directory
@@ -1118,8 +1119,6 @@ sub aur_site_get_url {
 }
 
 sub fetchdoc {
-	use LWP::UserAgent;
-
 	my $url = $_[0];
 	my $silent = 0;
 	if (@_ == 2 && $_[1] eq "silent") {
