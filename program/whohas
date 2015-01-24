@@ -146,7 +146,7 @@ foreach (keys %distrosSelected) {
 $q->end();
 
 if (!$nothreads) {
-	my $maxthreads = $q->pending();
+	my $maxthreads = maxthreads($q);
 	my @thrs;
 	for (0..$maxthreads - 1) {
 		push(@thrs, threads->new(\&worker));
@@ -163,6 +163,18 @@ sub worker {
 	while (defined(my $distro = $q->dequeue())) {
 		# NB this is only safe because we've previously checked for illegal subs
 		&$distro($ARGV[0]);
+	}
+}
+
+sub maxthreads {
+	my ($q) = @_;
+	my $jobcount = $q->pending();
+	eval { require Sys::CPU; };
+	if ($@) {
+		return $jobcount;
+	} else {
+		my $cpucount = Sys::CPU::cpu_count();
+		return $cpucount < $jobcount ? $cpucount : $jobcount;
 	}
 }
 

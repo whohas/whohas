@@ -6,6 +6,7 @@ Dependencies
 perl
 LWP::UserAgent (usually packaged as libwww-perl or perl-libwww, depending on distribution)
 Thread::Queue
+Sys::CPU (optional)
 date
 
 
