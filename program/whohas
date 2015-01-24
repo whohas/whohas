@@ -42,6 +42,7 @@ use Env qw(HOME);
 use if $Config{usethreads}, "threads";
 use Getopt::Long;
 use LWP::UserAgent;
+use Thread::Queue;
 
 my $confdir = "$HOME/.whohas";
 # make .whohas directory in home directory
@@ -67,9 +68,6 @@ my %distrosSelected;
 foreach (@distrosAvailable) {
 	$distrosSelected{$_} = 1;
 }
-
-my @thrs;
-my $here = 0;
 
 my @distroSelections;
 my $nothreads;
@@ -133,38 +131,38 @@ if ($ARGV[0] eq "whohasme") {
 	exit;
 }
 
-if (!$nothreads) {
-	foreach (keys %distrosSelected) {
-		if ($distrosSelected{$_}) {
-			if ($_ eq 'arch') {
-				$thrs[$here++] = threads->new(\&arch,		$ARGV[0]);
-				$thrs[$here++] = threads->new(\&aur,		$ARGV[0]);
-			} elsif ($_ eq 'slack') {
-				$thrs[$here++] = threads->new(\&slack,		$ARGV[0]);
-				$thrs[$here++] = threads->new(\&lp_net,		$ARGV[0]);
-			} else {	# NB this is only safe because we've previously checked for illegal subs
-				no strict "refs";
-				$thrs[$here++] = threads->new(\&$_,		$ARGV[0]);
-			}
+my $q = Thread::Queue->new();
+foreach (keys %distrosSelected) {
+	if ($distrosSelected{$_}) {
+		if ($_ eq 'arch') {
+			$q->enqueue('arch', 'aur');
+		} elsif ($_ eq 'slack') {
+			$q->enqueue('slack', 'lp_net');
+		} else {
+			$q->enqueue($_);
 		}
+	}
+}
+$q->end();
+
+if (!$nothreads) {
+	my $maxthreads = $q->pending();
+	my @thrs;
+	for (0..$maxthreads - 1) {
+		push(@thrs, threads->new(\&worker));
 	}
 	foreach (@thrs) {
 		$_->join;
 	}
 } else {
-	foreach (keys %distrosSelected) {
-		if ($distrosSelected{$_}) {
-			if ($_ eq 'arch') {
-				&arch(		$ARGV[0]);
-				&aur(		$ARGV[0]);
-			} elsif ($_ eq 'slack') {
-				&slack(		$ARGV[0]);
-				&lp_net(	$ARGV[0]);
-			} else {	# NB this is only safe because we've previously checked for illegal subs
-				no strict "refs";
-				&$_(		$ARGV[0]);
-			}
-		}
+	worker();
+}
+
+sub worker {
+	no strict "refs";
+	while (defined(my $distro = $q->dequeue())) {
+		# NB this is only safe because we've previously checked for illegal subs
+		&$distro($ARGV[0]);
 	}
 }
 
