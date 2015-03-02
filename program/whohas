@@ -178,7 +178,7 @@ sub fedora {
 	my @sizes;
 	my @repos;
 	my @urls;
-	for (my $i = 19; $i <= $fedora_release; $i++) { # just the one release for now
+	for (my $i = $fedora_release; $i >= 19; $i--) {
 		my @fed_urls = ("$i/Everything/$arch/os/Packages/");
 		my $file = "$confdir/$distroname\_$i.list";
 		{
