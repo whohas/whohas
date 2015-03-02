@@ -185,8 +185,8 @@ sub fedora {
 			for (my $a = 0; $a < @fed_urls; $a++) {
 				my @lines = split /\n/, &fetchdoc($baseurl.$fed_urls[$a].lc(substr($searchy, 0, 1)).'/');
 				for (my $li = 0; $li < @lines; $li++) {
-					if ($lines[$li] =~ /^ +<a href="/) {
-						my ($name, $version, $date, $size) = ($lines[$li] =~ m{ +<a href=['"](.+?)-([0-9].*)\.fc[0-9]*\.[^.]*\.rpm">[^<]*</a> *([^ ]* [^ ]*) *([^ ]*) *RPM Package});
+					if ($lines[$li] =~ / +<a href="[^"]+?rpm"/) {
+						my ($name, $version, $date, $size) = ($lines[$li] =~ m{ +<a href="(.+?)-([0-9].*)\.fc[0-9]*\.[^.]*\.rpm">[^<]*</a> *([^ ]* [^ ]*) *([^ ]*) *(?:RPM Package)?});
 						push @names, $name;
 						push @versions, $version;
 						push @dates, $date;
