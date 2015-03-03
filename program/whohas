@@ -39,6 +39,7 @@ use sigtrap;
 
 use Config;
 use Env qw(HOME);
+use if $^O ne 'MSWin32', 'forks';
 use if $Config{usethreads}, "threads";
 use Getopt::Long;
 use LWP::UserAgent;
