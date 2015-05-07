@@ -26,7 +26,7 @@ use sigtrap;
 #TODO --fetch-unstable switch
 #TODO make sure that debian's version numbers are from i386
 #TODO get date info about debian, ubuntu (link is to changelog)
-#TODO get size and date info about slackware packages from subsequent links  - postponed until slackware packages is online again
+#TODO get date info about slackware packages from subsequent links  - postponed until slackware packages is online again
 #TODO architecture tests for those that support several
 #TODO Gentoo: only report two most recent for each package?
 #TODO make more use of the conf directory, e.g. for Fedora, Sourcemage, so we download those indexes only sparingly, and save ourselves processing time; MAKE SURE YOU WRITE THE PROCESSED RESULTS FOR EASY PARSING ON THE NEXT RUN
@@ -61,7 +61,6 @@ my $opensuse_major		 = "13"			;
 my $opensuse_minor		 = "2"			;
 my $mandrivaVersion		 = "2011.0"		;
 my $openbsd_release		 = "5.7"		;
-my $slackfind_version		 = 9			; # corresponds to 13.1
 
 my @distrosAvailable = ('arch','cygwin','debian','fedora','fink','freebsd','gentoo','macports','mandriva','netbsd','openbsd','opensuse','slack','sourcemage','ubuntu');
 my %distrosSelected;
@@ -772,64 +771,14 @@ sub combos_freebsd {
 	return($name,$version);
 }
 
-sub slack {
-	my $baseurl = 'http://slackfind.net';
-	my @repos;
-	my @groups;
-	my @names;
-	my @versions;
-	my @urls;
-	my @combos;
-	my @sizes;
-	my @dates;
-	my @lines = split /\n/, &fetchdoc($baseurl."/en/packages/search/?name=".$_[0]."&distversion=".$slackfind_version);
-	my $pages = 0;
-	my @pagedURLs;
-
-	# finding additional pages
-	if (@lines > 800) {
-		for (my $i = 800; $i < @lines; $i++) {
-			if ($lines[$i] =~ /<span class="paging-button">/) {
-				$pages++;
-				if ($pages > 1) {
-					my $tmp = (split /"/, $lines[$i])[3];
-					$tmp =~ s/\&amp;/&/g;
-					push @pagedURLs, $tmp;
-				}
-			}
-		}
-	}
-
-	# finding content
-	my $a = -1;
-	for (; $a < @pagedURLs; $a++) {
-		unless ($a < 0) {
-			@lines = split /\n/, &fetchdoc($baseurl."/en/packages/search/".$pagedURLs[$a]);
-		}
-		for (my $i = 0; $i < @lines; $i++) {
-			if ($lines[$i] =~ /result-package-name/) {
-				my $a = @repos;
-				($names[$a],$versions[$a]) = &slack_combos($lines[$i+1]);
-			} elsif ($lines[$i] =~ /result-repository/) {
-				my $tmp = $lines[$i+1];
-				push @repos, (split /<span>| <a href/, $tmp)[1];
-			}
-		}
-	}
-	for (my $i = 0; $i < @repos; $i++) {
-		&pretty_print($cols,@columns,"Slackware",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
-	}
-	return ();
-}
-
 sub slack_combos {
 	$_[0] =~ s/^\s*//;
 	my @parts = split /-/, $_[0];
-	return ((join '-', @parts[0..(@parts-4)]),(join '-', @parts[(@parts-3)..(@parts-1)]));
+	return ((join '-', @parts[0..(@parts-4)]),$parts[(@parts-3)]);
 }
 
-sub slack_old {
-	my $slackbase  = "http://packages.slackware.it/";
+sub slack {
+	my $slackbase  = "http://packages.slackware.com/";
 	my @repos;
 	my @groups;
 	my @names;
@@ -838,19 +787,28 @@ sub slack_old {
 	my @combos;
 	my @sizes;
 	my @dates;
-	my @lines = split /\n|<br>|<\/td>/, &fetchdoc($slackbase."/search.php?v=current&t=1&q=".$_[0]);
+	my @lines = split /\n|<br>|<\/tr>/, &fetchdoc($slackbase."/?release=slackware-current&mode=package&result=100&extra=on&pasture=on&patches=on&slackware=on&source=on&testing=on&search=".$_[0]);
 	my $now = 0;
 	for (my $i = 0; $i < @lines; $i++) {
-		if ($lines[$i] =~ /class="pkgtitle"/) {
-			my @parts = split /a href="|">|<\/a> in |<\/div>/, $lines[$i];
-			$parts[4] =~ s/slackware\///;
-			push @groups, $parts[4];
-			push @repos, "";
-			($names[$now],$versions[$now]) = &combor($parts[3]);
+		if ($lines[$i] =~ /<td nowrap><a href=/) {
+			my $line = $lines[$i];
+			$line =~ s{<td align="right">}{<td>};
+			$line =~ s{<td nowrap>}{<td>};
+			$line =~ s{^<tr><td>}{};
+			$line =~ s{</td>$}{};
+			my @parts = split /<\/td><td>/, $line;
+			my ($repo, $group) = split '/', $parts[1], 2;
+			push @groups, $group;
+			push @repos, $repo;
+			$parts[2] =~ s{^<a href="?}{};
+			$parts[2] =~ s{</a>$}{};
+			my ($url, $combo) = split '>', $parts[2], 2;
+			my ($name, $version) = &slack_combos($combo);
+			($names[$now],$versions[$now]) = ($name, $version);
 			$now++;
-			push @urls, $slackbase.$parts[2];
+			push @urls, $slackbase.$url;
 			push @dates, "";
-			push @sizes, "";
+			push @sizes, $parts[3];
 		}
 	}
 	for (my $i = 0; $i < @repos; $i++) {
