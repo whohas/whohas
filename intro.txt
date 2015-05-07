@@ -1,6 +1,6 @@
 Notes for whohas
 
-More information can be found at http://www.philippwesche.org/2004/programs/whohas/intro.html
+More information can be found at http://www.philippwesche.org/200811/whohas/intro.html
 
 Philipp L. Wesche, 17 July 2005
 
