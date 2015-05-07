@@ -17,4 +17,4 @@ Sys::CPU (optional)
 To install
 ==========
 
-execute "./install.sh"
+sudo make install
