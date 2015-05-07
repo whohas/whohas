@@ -1417,7 +1417,7 @@ sub mandriva {
 	my @repos;
 	my @urls;
 	# NB this server also supports exact matching
-	my @lines = split /\n/, &fetchdoc($baseurl."/search?search=".$_[0]."&type=fuzzyname&deptype=P&distribution=Mandriva");
+	my @lines = split /\n/, &fetchdoc($baseurl."/search?search=".$_[0]."&type=fuzzyname&deptype=P&distribution=Mandriva&release=current");
 	for (my $i = 350; $i < @lines; $i++) {
 		#TODO need to check for possible further pages (lists 20 per page)
 		#TODO ajax or xml::rpc access might have advantages w.r.t. paging (i.e. none required) 
