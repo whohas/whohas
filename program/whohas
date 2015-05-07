@@ -35,7 +35,6 @@ use sigtrap;
 #TODO ubuntu: allow two releases: the long term supported and the most recent
 #TODO allow searching on several packages; return results only for those distros that have a hit for each package, possibly in tabular format
 #TODO deal gracefully with hyphens that may be present in some distros but not others, i.e. include extra hyphens in regexes, and allow user-specified hyphens to be absent
-#TODO fix opensuse
 
 use Config;
 use Env qw(HOME);
@@ -57,8 +56,6 @@ my $cols = 6;
 my $fedora_min_release		 =  20			;
 my $fedora_max_release		 =  21			;
 my $ubuntu_current_release	 = "all"		;
-my $opensuse_major		 = "13"			;
-my $opensuse_minor		 = "2"			;
 my $openbsd_release		 = "5.7"		;
 
 my @distrosAvailable = ('arch','cygwin','debian','fedora','fink','freebsd','gentoo','macports','mandriva','netbsd','openbsd','opensuse','slack','sourcemage','ubuntu');
@@ -1099,37 +1096,7 @@ sub trim($) {
 	return $string;
 }
 
-sub prep_suse_repo {
-	if ($_[0] =~ /http\:\/\/download\.opensuse\.org/) {
-		if ($_[0] =~ /repositories/) {
-			if ($_[0] =~ /home\:/) {
-				$_[0] =~ s/^http\:\/\/download\.opensuse\.org\/repositories\/home\:\///;
-				$_[0] =~ s/\/openSUSE_11.0//;
-				$_[0] =~ s/\:\/.*$//g;
-				return $_[0];
-			} elsif ($_[0] =~ /http\:\/\/.*:\//) {
-				$_[0] =~ s/http\:\/\/download\.opensuse\.org\/repositories\///;
-				$_[0] =~ s/\:\/.*//;
-				return $_[0];
-			} else {
-				$_[0] =~ s/http\:\/\/download\.opensuse\.org\/repositories\///;
-				$_[0] =~ s/\/.*//;
-				return $_[0];
-			}
-		} elsif ($_[0] =~ /http\:\/\/download\.opensuse\.org\/distribution\// && $_[0] =~ /repo\/oss/) {
-			return "suse/oss";
-		}
-	} elsif ($_[0] =~ "http://packman.iu-bremen.de/suse/") {
-		return "packman";
-	} else {
-		return $_[0];
-	}
-}
-
 sub opensuse {
-	my $release_string = $opensuse_major.'.'.$opensuse_minor;
-	my $major = $opensuse_major;
-	my $minor = $opensuse_minor;
 	my $opensusebase = "http://software.opensuse.org";
 	my @names;
 	my @repos;
@@ -1140,38 +1107,21 @@ sub opensuse {
 	my @dates;
 	my $distroname = "openSUSE";
 
-	my @lines = split /\n/, &fetchdoc($opensusebase."/search?q=".$_[0]."&baseproject=".$distroname."%3A".$release_string."&lang=en&exclude_debug=true");
-	my $continuity = 2;
+	my @lines = split /\n/, &fetchdoc($opensusebase."/search?q=".$_[0]."&baseproject=".$distroname."&lang=en&exclude_debug=true");
 	for (my $i = 0; $i < @lines; $i++) {
-		if ($lines[$i] =~ /div class="search_o_title"/) {
-			push @names, (split /<\/?h3>/, $lines[($i+2)])[1];
-			for (my $a = $i+1; $a < $i + 20; $a++) {
-				if ($lines[$a] =~ /<h4><a class="blue_over" href=/) {
-					my @temps = split /\"\>|\<\/a\>/, $lines[$a];
-					$temps[1] =~ s/\/openSUSE_$major\.$minor$//;
-					$temps[1] =~ s/^openSUSE\:$major\.$minor\///;
-					$temps[1] =~ s/\/$major\.$minor$//;
-					$temps[1] =~ s/^home/\~/;
-					push @repos, $temps[1];
-					last;
-				}
-			}
-			for (my $a = $i + 10; $a < $i + 50; $a++) {
-				if ($lines[$a] =~ /a style="margin-right: 2em"  href/) {
-					my @parts = split /\"\>|\<\/a\>/, $lines[$a];
-					my @segments = split /\-/, $parts[1];
-					push @versions, $segments[(@segments-2)];
-					last;
-				}
-			}
-			push @urls,   '';
+		if ($lines[$i] =~ /<div class="search-result-txt"/) {
+			my $line = $lines[($i+1)];
+			$line =~ s{^.*<h3><a href="}{};
+			$line =~ s{</?mark>}{}g;
+			$line =~ s{</a>.*}{};
+			my ($url, $name) = split /">/, $line, 2;
+			push @names, $name;
+			push @urls, "$opensusebase$url";
+			push @versions, '';
 			push @sizes,  '';
 			push @dates,  '';
 			push @groups, '';
-		}
-		if ($lines[$i] =~ /type:'post', url:'\/search\/search.*'\}\); return false;">$continuity<\/a>/) {
-			push @lines,  split /\n/, &fetchdoc($opensusebase."?q=".$_[0]."&baseproject=openSUSE:".$release_string.'&p='.$continuity);
-			$continuity++;
+			push @repos, '';
 		}
 	}
 	for (my $i = 0; $i < @repos; $i++) {
