@@ -1,7 +1,8 @@
 PREFIX  ?= /usr/local
 bindir  ?= $(PREFIX)/bin
 mandir  ?= $(PREFIX)/share/man
-exadir  ?= $(PREFIX)/share/doc/whohas/examples
+docdir  ?= $(PREFIX)/share/doc/whohas
+exadir  ?= $(docdir)/examples
 INSTALL ?= install
 VERSION ?= 0.29.1
 
@@ -18,6 +19,13 @@ install:
 	$(INSTALL) -d $(DESTDIR)$(mandir)/de/man1
 	$(INSTALL) -m644 usr/share/man/man1/whohas.1 $(DESTDIR)$(mandir)/man1
 	$(INSTALL) -m644 usr/share/man/de/man1/whohas.1 $(DESTDIR)$(mandir)/de/man1
+	$(INSTALL) -d $(DESTDIR)$(docdir)
+	$(INSTALL) -m644 intro.html $(DESTDIR)$(docdir)
+	$(INSTALL) -d $(DESTDIR)$(docdir)/html_assets
+	$(INSTALL) -m755 html_assets/* $(DESTDIR)$(docdir)/html_assets
+	$(INSTALL) -m644 README $(DESTDIR)$(docdir)
+	$(INSTALL) -m644 NEWS $(DESTDIR)$(docdir)
+	$(INSTALL) -m644 TODO $(DESTDIR)$(docdir)
 	$(INSTALL) -d $(DESTDIR)$(exadir)
 	$(INSTALL) -m644 whohas.cf $(DESTDIR)$(exadir)
 
