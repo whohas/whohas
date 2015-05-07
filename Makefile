@@ -1,6 +1,7 @@
 PREFIX  ?= /usr/local
 bindir  ?= $(PREFIX)/bin
 mandir  ?= $(PREFIX)/share/man
+exadir  ?= $(PREFIX)/share/doc/whohas/examples
 INSTALL ?= install
 
 all: check
@@ -15,5 +16,7 @@ install:
 	$(INSTALL) -d $(DESTDIR)$(mandir)/de/man1
 	$(INSTALL) -m644 usr/share/man/man1/whohas.1 $(DESTDIR)$(mandir)/man1
 	$(INSTALL) -m644 usr/share/man/de/man1/whohas.1 $(DESTDIR)$(mandir)/de/man1
+	$(INSTALL) -d $(DESTDIR)$(exadir)
+	$(INSTALL) -m644 program/whohas.cf $(DESTDIR)$(exadir)
 
 .PHONY: all install check

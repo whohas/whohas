@@ -44,6 +44,7 @@ use Getopt::Long;
 use LWP::UserAgent;
 use Thread::Queue;
 
+my $conffile = "whohas.cf";
 my $confdir = "$HOME/.whohas";
 # make .whohas directory in home directory
 unless (-d $confdir) {
@@ -53,10 +54,10 @@ unless (-d $confdir) {
 my @columns = (11,38,18,4,10,25);
 my $cols = 6;
 
-my $fedora_min_release		 =  20			;
-my $fedora_max_release		 =  21			;
-my $ubuntu_current_release	 = "all"		;
-my $openbsd_release		 = "5.7"		;
+our $fedora_min_release		 =  20			;
+our $fedora_max_release		 =  21			;
+our $ubuntu_current_release	 = "all"		;
+our $openbsd_release		 = "5.7"		;
 
 my @distrosAvailable = ('arch','cygwin','debian','fedora','fink','freebsd','gentoo','macports','mandriva','netbsd','openbsd','opensuse','slack','sourcemage','ubuntu');
 my %distrosSelected;
@@ -64,11 +65,21 @@ foreach (@distrosAvailable) {
 	$distrosSelected{$_} = 1;
 }
 
-my @distroSelections;
+our @distroSelections;
 my $nothreads;
 my $shallow;
 my $option_help;
 my $option_strict;
+
+if ( -s "$confdir/$conffile" ) {
+	eval {
+		do "$confdir/$conffile";
+	};
+	if ($@) {
+		print STDERR 'Eval of configuration caused errors. Aborting.\n';
+		exit;
+	}
+}
 
 GetOptions(
 	"d=s" => \@distroSelections,
