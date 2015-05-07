@@ -1,4 +1,4 @@
-Release notes for whohas 0.1
+Notes for whohas
 
 More information can be found at http://www.philippwesche.org/2004/programs/whohas/intro.html
 
