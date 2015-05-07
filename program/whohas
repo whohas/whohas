@@ -61,7 +61,6 @@ my $opensuse_major		 = "13"			;
 my $opensuse_minor		 = "2"			;
 my $mandrivaVersion		 = "2011.0"		;
 my $openbsd_release		 = "5.7"		;
-my $slackware_version_for_lp_net = "13.1"		;
 my $slackfind_version		 = 9			; # corresponds to 13.1
 
 my @distrosAvailable = ('arch','cygwin','debian','fedora','fink','freebsd','gentoo','macports','mandriva','netbsd','openbsd','opensuse','slack','sourcemage','ubuntu');
@@ -137,8 +136,6 @@ foreach (keys %distrosSelected) {
 	if ($distrosSelected{$_}) {
 		if ($_ eq 'arch') {
 			$q->enqueue('arch', 'aur');
-		} elsif ($_ eq 'slack') {
-			$q->enqueue('slack', 'lp_net');
 		} else {
 			$q->enqueue($_);
 		}
@@ -231,62 +228,6 @@ sub month_to_digits {
 	$_[0] =~ s/NOV/11/i;
 	$_[0] =~ s/DEC/12/i;
 	return ($_[0]);
-}
-
-sub lp_net {
-	my $version = $slackware_version_for_lp_net;
-	my @lines = split /\n/, &fetchdoc("http://www.linuxpackages.net/search_view.php?by=name&name=".$_[0]."&ver=".$version);
-	my @names;
-	my @versions;
-	my @dates;
-	my @sizes;
-	my @repos;
-	my @urls;
-	for (my $i = 0; $i < @lines; $i++) {
-		if ($lines[$i] =~ /<tr bgcolor="#ffffff"><td>/) {
-			push @names,    (split /">|<\/a/,   $lines[$i+1])[1];
-			push @versions, (split /<\/td/,     $lines[$i+3])[0];
-			push @repos,    (split /<\/td/,     $lines[$i+5])[0];
-			my $url = (split /href="|">/, $lines[$i+8])[1];
-			my @ret = &lp_net_details($url);
-			push @urls, $url;
-			push @sizes, $ret[0];
-			push @dates, $ret[1];
-			$i += 10;
-		}
-	}
-	for (my $i = 0; $i < @repos; $i++) {
-		&pretty_print($cols,@columns,"lp.net",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
-	}
-	return ();
-}
-
-sub lp_net_details {
-	my $size;
-	my $date;
-	my $findd = 0;
-	my $finds = 0;
-	my @lines = split /\n/, &fetchdoc($_[0]);
-	for (my $i = 340; $i < @lines;$i++) {
-		if ($lines[$i] =~ /Date :/) {
-			if ($findd == 1) {
-				die "encountered several dates for package\n";
-			} else {
-				$findd = 1;
-			}
-			$date = join "", (split //, (split /<b>|<\/b>/, $lines[$i])[1])[0..9];
-		}
-		if ($lines[$i] =~ /Filesize :/) {
-			if ($finds == 1) {
-				die "encountered several sizes for package\n";
-			} else {
-				$finds = 1;
-			}
-			my $presize = (split / /, (split /<b>|<\/b>/, $lines[$i])[1])[0];
-			$size = &size_trim($presize*1000);
-		}
-	}
-	return ($size,$date);
 }
 
 sub macports {
