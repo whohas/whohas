@@ -60,7 +60,7 @@ my $ubuntu_current_release	 = "all"		;
 my $opensuse_major		 = "13"			;
 my $opensuse_minor		 = "2"			;
 my $mandrivaVersion		 = "2011.0"		;
-my $openbsd_release		 = "5.5"		;
+my $openbsd_release		 = "5.7"		;
 my $slackware_version_for_lp_net = "13.1"		;
 my $slackfind_version		 = 9			; # corresponds to 13.1
 
