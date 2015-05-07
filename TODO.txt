@@ -15,8 +15,8 @@ http://openmoko.org/
 http://openwrt.org
 http://www.emdebian.org/
 http://elinux.org/Embedded_Linux_Distributions
-http://www.linuxdevices.com/articles/AT2760742655.html
-http://freshmeat.net/
+https://wayback.archive.org/web/http://www.linuxdevices.com/articles/AT2760742655.html
+http://freecode.com/
 http://directory.fsf.org/
 http://en.wikipedia.org/wiki/Comparison_of_free_software_hosting_facilities
 http://www.sisyphus.ru/
@@ -26,8 +26,8 @@ http://sourceforge.net
 http://www.berlios.de
 http://github.com
 http://gitorious.org
-http://www.ohloh.net
+http://www.openhub.net
 http://code.google.com
 http://www.launchpad.net
 http://bitbucket.org
-http://transifex.net
+http://transifex.com
