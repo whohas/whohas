@@ -59,7 +59,7 @@ our $fedora_max_release		 =  21			;
 our $ubuntu_current_release	 = "all"		;
 our $openbsd_release		 = "5.7"		;
 
-my @distrosAvailable = ('arch','cygwin','debian','fedora','fink','freebsd','gentoo','macports','mandriva','netbsd','openbsd','opensuse','slack','sourcemage','ubuntu');
+my @distrosAvailable = qw(arch cygwin debian fedora fink freebsd gentoo macports mandriva netbsd openbsd opensuse slack sourcemage ubuntu);
 my %distrosSelected;
 foreach (@distrosAvailable) {
 	$distrosSelected{$_} = 1;
