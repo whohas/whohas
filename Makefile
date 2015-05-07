@@ -7,16 +7,16 @@ INSTALL ?= install
 all: check
 
 check:
-	perl -wc program/whohas
+	perl -wc whohas
 
 install:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
-	$(INSTALL) -m755 program/whohas $(DESTDIR)$(bindir)
+	$(INSTALL) -m755 whohas $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man1
 	$(INSTALL) -d $(DESTDIR)$(mandir)/de/man1
 	$(INSTALL) -m644 usr/share/man/man1/whohas.1 $(DESTDIR)$(mandir)/man1
 	$(INSTALL) -m644 usr/share/man/de/man1/whohas.1 $(DESTDIR)$(mandir)/de/man1
 	$(INSTALL) -d $(DESTDIR)$(exadir)
-	$(INSTALL) -m644 program/whohas.cf $(DESTDIR)$(exadir)
+	$(INSTALL) -m644 whohas.cf $(DESTDIR)$(exadir)
 
 .PHONY: all install check
