@@ -59,7 +59,6 @@ my $fedora_max_release		 =  21			;
 my $ubuntu_current_release	 = "all"		;
 my $opensuse_major		 = "13"			;
 my $opensuse_minor		 = "2"			;
-my $mandrivaVersion		 = "2011.0"		;
 my $openbsd_release		 = "5.7"		;
 
 my @distrosAvailable = ('arch','cygwin','debian','fedora','fink','freebsd','gentoo','macports','mandriva','netbsd','openbsd','opensuse','slack','sourcemage','ubuntu');
@@ -1418,7 +1417,7 @@ sub mandriva {
 	my @repos;
 	my @urls;
 	# NB this server also supports exact matching
-	my @lines = split /\n/, &fetchdoc($baseurl."/search?search=".$_[0]."&type=fuzzyname&deptype=P&distribution=Mandriva&release=".$mandrivaVersion."&arch=");
+	my @lines = split /\n/, &fetchdoc($baseurl."/search?search=".$_[0]."&type=fuzzyname&deptype=P&distribution=Mandriva");
 	for (my $i = 350; $i < @lines; $i++) {
 		#TODO need to check for possible further pages (lists 20 per page)
 		#TODO ajax or xml::rpc access might have advantages w.r.t. paging (i.e. none required) 
