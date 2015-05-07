@@ -3,6 +3,7 @@ bindir  ?= $(PREFIX)/bin
 mandir  ?= $(PREFIX)/share/man
 exadir  ?= $(PREFIX)/share/doc/whohas/examples
 INSTALL ?= install
+VERSION ?= 0.29.1
 
 all: check
 
@@ -20,4 +21,21 @@ install:
 	$(INSTALL) -d $(DESTDIR)$(exadir)
 	$(INSTALL) -m644 whohas.cf $(DESTDIR)$(exadir)
 
-.PHONY: all install check
+release:
+	gitk --all &
+	echo '!!! Please summarize the release here one item per paragraph !!!' > NEWS.notes
+	$$EDITOR NEWS.notes
+	echo $(VERSION) > NEWS.new
+	echo >> NEWS.new
+	cat NEWS.notes >> NEWS.new
+	echo >> NEWS.new
+	cat NEWS >> NEWS.new
+	mv NEWS.new NEWS
+	sed -i '/^\.TH/s/"[0-9]\.[0-9.]\+"/"$(VERSION)"/' usr/share/man/man1/whohas.1 usr/share/man/de/man1/whohas.1
+	git commit -m 'Release version $(VERSION)' NEWS usr
+	git tag -s -a -F NEWS.notes $(VERSION)
+	rm -f NEWS.notes
+	GZIP= git archive --prefix=whohas-$(VERSION)/ -o whohas-$(VERSION).tar.gz $(VERSION)
+	gpg --armour --detach-sign whohas-$(VERSION).tar.gz
+
+.PHONY: all install check release
