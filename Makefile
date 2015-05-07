@@ -3,7 +3,10 @@ bindir  ?= $(PREFIX)/bin
 mandir  ?= $(PREFIX)/share/man
 INSTALL ?= install
 
-all:
+all: check
+
+check:
+	perl -wc program/whohas
 
 install:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
@@ -13,4 +16,4 @@ install:
 	$(INSTALL) -m644 usr/share/man/man1/whohas.1 $(DESTDIR)$(mandir)/man1
 	$(INSTALL) -m644 usr/share/man/de/man1/whohas.1 $(DESTDIR)$(mandir)/de/man1
 
-.PHONY: all install
+.PHONY: all install check
