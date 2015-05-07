@@ -8,6 +8,7 @@ all: check
 
 check:
 	perl -wc whohas
+	test "$$(sed -n 's/^.*distros[a-zA-Z]\+ = qw(\([^)]*\).*/\1/p' whohas)" = "$$(sed -n 's/^.*distro[a-zA-Z]\+ = qw(\([^)]*\).*/\1/p' whohas.cf)"
 
 install:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
