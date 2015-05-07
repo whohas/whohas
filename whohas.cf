@@ -11,6 +11,7 @@
 
 #$fedora_min_release = 25;
 #$fedora_max_release = 24;
+#$debian_current_release = 'all';
 #$ubuntu_current_release = 'all';
 #$openbsd_release = '5.7';
 

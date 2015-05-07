@@ -56,6 +56,7 @@ my $cols = 6;
 
 our $fedora_min_release		 =  20			;
 our $fedora_max_release		 =  21			;
+our $debian_current_release	 = "all"		;
 our $ubuntu_current_release	 = "all"		;
 our $openbsd_release		 = "5.7"		;
 
@@ -860,7 +861,7 @@ sub debian_size_convert {
 }
 
 sub debian {
-	my @dists = ( 'all' );
+	my @dists = ($debian_current_release);
 	&debuntu('http://packages.debian.org','Debian',\@dists,$_[0]);
 	return();
 }
