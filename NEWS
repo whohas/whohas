@@ -1,3 +1,18 @@
+0.29.1
+
+Uses less memory and improves threading (requires forks Perl module).
+
+Update the documentation.
+
+Fetch multiple suites at once for Debian/Ubuntu.
+
+Improved options parsing.
+
+Add a config file to set desired distros/releases.
+
+Fixed support for Gentoo, Slackware, OpenBSD, FreeBSD,
+Arch, AUR, Fedora, Fink, openSUSE, Mandriva and Cygwin.
+
 0.29
 
 fixed AUR module
