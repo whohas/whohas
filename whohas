@@ -623,7 +623,7 @@ sub openbsd_older {
 }
 
 sub cygwin {
-	my $baseurl = "http://www.cygwin.com/packages/";
+	my $baseurl = "http://www.cygwin.com/packages";
 	my @names;
 	my @versions;
 	my @urls;
@@ -633,11 +633,18 @@ sub cygwin {
 	my @archs;
 	my $distroname = "Cygwin";
 	my $searchy = $_[0];
-	my @lines = split /\n/, &fetchdoc($baseurl);
+	my @lines = split /\n/, &fetchdoc("$baseurl/package_list.html");
 	for (my $i = 0; $i < @lines; $i++) {
-		if ($lines[$i] =~ /$searchy/i && $lines[$i] =~ /ware\.org\/icons\/ba/) {
-			my $temp = (split /href\=\"|\"\>/, $lines[$i])[2];
-			my @detailLines = split /\n/, &fetchdoc($baseurl.$temp);
+		my $line = $lines[$i];
+		if ($line =~ /<tr><td><a href="/) {
+			$line =~ s{^<tr><td>}{};
+			$line =~ s{</td></tr>$}{};
+			my @parts = split /<\/td><td>/, $line;
+			$parts[0] =~ s{^<a href="?}{};
+			$parts[0] =~ s{</a>$}{};
+			my ($temp, $name) = split /"?>/, $parts[0], 2;
+			next unless $name =~ /$searchy/i;
+			my @detailLines = split /\n/, &fetchdoc("$baseurl/$temp/");
 			my $highest = '';
 			for (my $a = 0; $a < @detailLines; $a++) { # incrementing ensures that the highest version number will prevail
 								   # (higher ones occur lower down at time of writing)
@@ -650,7 +657,7 @@ sub cygwin {
 			push @names,    $comps[1];
 			push @archs,    $comps[0];
 			push @dates,    '';
-			push @urls,     '';
+			push @urls,     "$baseurl/$temp/$highest";
 			push @sizes,    '';
 			push @repos,    '';
 		}
