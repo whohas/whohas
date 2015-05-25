@@ -1,8 +1,10 @@
-use getopts for all parameters
-
 fix repo string length for some osuse repos (e.g. in whohas whohas result)
 
 make extra columns for debian and ubuntu, to avoid inconveniencing everybody else
+
+Stop this command from printing HTML: whohas -d arch bash
+
+Prevent printing unnecessary white-space due to empty columns
 
 Add more sites:
 
