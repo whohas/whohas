@@ -5,12 +5,28 @@ docdir  ?= $(PREFIX)/share/doc/whohas
 exadir  ?= $(docdir)/examples
 INSTALL ?= install
 VERSION ?= 0.29.1
+WH_PATH ?= ./
 
 all: check
 
 check:
 	perl -wc whohas
 	test "$$(sed -n 's/^.*distros[a-zA-Z]\+ = qw(\([^)]*\).*/\1/p' whohas)" = "$$(sed -n 's/^.*distro[a-zA-Z]\+ = qw(\([^)]*\).*/\1/p' whohas.cf)"
+
+check-distros:
+	status=0 ;\
+	for distro in $$(sed -n 's/^.*distros[a-zA-Z]\+ = qw(\([^)]*\).*/\1/p' whohas) ; do \
+	  echo -n "Checking $$distro... " ;\
+	  lines=$$($(WH_PATH)whohas -d $$distro bash 2> /dev/null | wc -l) ;\
+	  ret=$$? ;\
+	  if [ 0 -eq $$lines -o $$ret -ne 0 ] ; then \
+	    echo FAIL ;\
+	    status=1 ;\
+	  else \
+	    echo OK ;\
+	  fi ;\
+	done ;\
+	exit $$status
 
 install:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
@@ -46,4 +62,4 @@ release:
 	GZIP= git archive --prefix=whohas-$(VERSION)/ -o whohas-$(VERSION).tar.gz $(VERSION)
 	gpg --armour --detach-sign whohas-$(VERSION).tar.gz
 
-.PHONY: all install check release
+.PHONY: all install check check-distros release
