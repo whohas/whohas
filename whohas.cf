@@ -13,7 +13,7 @@
 #$fedora_max_release = 24;
 #$debian_current_release = 'all';
 #$ubuntu_current_release = 'all';
-#$openbsd_release = '5.7';
+#$openbsd_release = '6.0';
 
 #
 # Inclusion of distributions.
