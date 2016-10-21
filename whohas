@@ -550,8 +550,8 @@ sub openbsd_newer {
 		my @lines = split /\n/, &fetchdoc($baseurl);
 		my $now = 0;
 		for (my $i = 0; $i < @lines; $i++) {
-			if ($lines[$i] =~ /^<IMG SRC="\/icons\/compressed\.gif/) {
-				my @firstParts = split /<A HREF="|\.tgz">|.tgz<\/A> +|  +/, $lines[$i];
+			if ($lines[$i] =~ /^<IMG SRC="\/icons\/compressed\.gif|\.tgz/i) {
+				my @firstParts = split /<A HREF="|\.tgz">|.tgz<\/A> +|  +/i, $lines[$i];
 				my $a = @names;
 				($names[$a],$versions[$a]) = &openbsd_combos($firstParts[2]);
 				push @dates, $firstParts[4];
