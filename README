@@ -103,3 +103,13 @@ I would like to encourage distributors at this time to provide web query interfa
 Additional remarks: Debian refers to the binary distribution. Slackware queries Current only. All details (including availability, version numbers and binary sizes) are for the x86 architecture, although this cannot be assured for either Debian or Gentoo in the current version of whohas. I recommend you consult the URLs provided in the output.
 
 Bug reports may be sent to phi1ipp@yahoo.com.
+
+Related software
+
+Repology is an open source service to track versions in distros:
+
+https://repology.org/
+
+namecheck is a tool from Debian devscripts to check where names are used:
+
+https://manpages.debian.org/namecheck
