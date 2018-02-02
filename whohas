@@ -186,7 +186,7 @@ sub maxthreads {
 sub fedora {
 	my $baseurl = "http://dl.fedoraproject.org/pub/fedora/linux/releases/";
 	my $distroname = "Fedora";
-	my $arch = "i386";
+	my $arch = "x86_64";
 	my $searchy = $_[0];
 	my @names;
 	my @versions;
