@@ -38,7 +38,7 @@ install:
 	$(INSTALL) -d $(DESTDIR)$(docdir)
 	$(INSTALL) -m644 intro.html $(DESTDIR)$(docdir)
 	$(INSTALL) -d $(DESTDIR)$(docdir)/html_assets
-	$(INSTALL) -m755 html_assets/* $(DESTDIR)$(docdir)/html_assets
+	$(INSTALL) -m644 html_assets/* $(DESTDIR)$(docdir)/html_assets
 	$(INSTALL) -m644 README $(DESTDIR)$(docdir)
 	$(INSTALL) -m644 NEWS $(DESTDIR)$(docdir)
 	$(INSTALL) -m644 TODO $(DESTDIR)$(docdir)
