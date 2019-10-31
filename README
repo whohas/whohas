@@ -110,6 +110,10 @@ Repology is an open source service to track versions in distros:
 
 https://repology.org/
 
+pkgs.org is a service for searching Linux/BSD package repositories:
+
+https://pkgs.org/
+
 namecheck is a tool from Debian devscripts to check where names are used:
 
 https://manpages.debian.org/namecheck
