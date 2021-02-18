@@ -9,7 +9,6 @@ date
 Perl Modules
 ------------
 LWP::UserAgent (usually packaged as libwww-perl or perl-libwww, depending on distribution)
-forks
 Thread::Queue
 Sys::CPU (optional)
 
