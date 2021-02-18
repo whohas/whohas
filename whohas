@@ -968,9 +968,8 @@ sub debuntu {
 }
 
 sub aur {
-	my $aurbase    = "http://aur.archlinux.org";
-	my $stop;
-	my @lines = split /\n/, &fetchdoc($aurbase."/packages.php?SeB=n&PP=1000&K=".$_[0]); # 1000 should be enough
+	my $aurbase    = "https://aur.archlinux.org";
+	my @lines = split /\n/, &fetchdoc($aurbase."/rpc/?v=5&type=search&arg=".$_[0]);
 
 	my @repos;
 	my @names;
@@ -978,21 +977,24 @@ sub aur {
 	my @dates;
 	my @urls;
 	my @sizes;
-	my $indicator = 0;
-	for (my $i = 100; $i < @lines; $i++) {  # 100 is a compromise between safety and efficiency
-		if ($lines[$i] =~ /<tr class=["'](?:odd|even)/) {
-			for (my $a = 2; $a < 7;$a++) {
-				my $temp = $lines[$a+$i];
-				$temp =~ s/.*\<td[^>]*\>|\<\/td\>//g;
-				if ($a == 2) {
-					push @urls, $aurbase.&arch_site_get_url ($lines[$i+$a]);
-					push @names, &arch_site_ger_cont($lines[$i+$a]);
-				} elsif ($a == 3) {
-					push @versions, $temp;
+	for (my $i = 0; $i < @lines; $i++) {
+		if ($lines[$i] =~ /\{/) {
+			my $content = decode_json($lines[$i]);
+			if ($content->{version} != 5 ) {
+				warn ("Unknown version");
+				return ();
+			}
+			for (my $i = 0; $i < @{$content->{results}}; $i++) {
+				my $pkg = $content->{results}[$i];
+				if ($pkg->{Name} =~ $_[0]) {
+					# push @repos, # there are no "repos" in AUR
+					push @names, $pkg->{Name};
+					push @versions, $pkg->{Version}; # XXX: Versions can be too long
+					# push @sizes, # not build so size is unknown
+					# push @dates, # not build so date is unknown
+					push @urls, "$aurbase/packages/$pkg->{Name}";
 				}
 			}
-			# 1 is section, 4 is votes, 5 is description, 7 is maintainer
-			$i += 7;
 		}
 	}
 	for (my $i = 0; $i < @names; $i++) {
