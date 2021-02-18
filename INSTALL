@@ -13,6 +13,10 @@ forks
 Thread::Queue
 Sys::CPU (optional)
 
+For fetching Archlinux/AUR information you also need:
+LWP::Protocol::https (usually packaged as perl-lwp-protocol-https, depending on distribution)
+JSON (usually packaged as perl-json, depending on distribution)
+
 
 To install
 ==========

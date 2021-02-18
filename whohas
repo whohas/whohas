@@ -142,6 +142,7 @@ my $q = Thread::Queue->new();
 foreach (keys %distrosSelected) {
 	if ($distrosSelected{$_}) {
 		if ($_ eq 'arch') {
+			use JSON;
 			$q->enqueue('arch', 'aur');
 		} else {
 			$q->enqueue($_);
@@ -1001,10 +1002,21 @@ sub aur {
 	return ();
 }
 
+sub human {
+        my $size = $_[0];
+	my @suffixes = (' ', 'K', 'M', 'G');
+	my $index = 0;
+
+	while ($size > 1024) {
+		$index++;
+		$size = POSIX::floor($size / 1024);
+	}
+	return("$size@suffixes[$index]");
+}
+
 sub arch {
-	my $archbase   = "http://www.archlinux.org";
-	# if we directly query i686, redirected to the specific package page
-	my @lines = split /\n/, &fetchdoc($archbase."/packages/?q=".$_[0]);
+	my $archbase   = "https://www.archlinux.org";
+	my @lines = split /\n/, &fetchdoc($archbase."/packages/search/json/?q=".$_[0]);
 
 	my @repos;
 	my @names;
@@ -1013,24 +1025,27 @@ sub arch {
 	my @urls;
 	my @sizes;
 	for (my $i = 0; $i < @lines; $i++) {
-		if ($lines[$i] =~ /\<tr class\=["'](?:odd|even)/) {
-			for (my $a = 2; $a < 11;$a++) {
-				my $temp = $lines[$a+$i];
-				$temp =~ s/.*\<td\>|\<\/td\>//g;
-				if ($a == 3) {
-					push @repos,$temp;
-				} elsif ($a == 4) {
-					push @urls, $archbase.&arch_site_get_url ($lines[$i+$a]);
-					push @names, &arch_site_ger_cont($lines[$i+$a]);
-				} elsif ($a == 6) {
-					push @versions, $temp;
-				} elsif ($a == 9) {
-					push @dates,    $temp;
+		if ($lines[$i] =~ /\{/) {
+			my $content = decode_json($lines[$i]);
+			if ($content->{version} != 2 ) {
+				warn ("Unknown version");
+				return ();
+			}
+			for (my $i = 0; $i < @{$content->{results}}; $i++) {
+				my $pkg = $content->{results}[$i];
+				if ($pkg->{pkgname} =~ $_[0]) {
+					push @repos, $pkg->{repo};
+					push @names, $pkg->{pkgname};
+					my $epoch = "";
+					if ($pkg->{epoch} != 0) {
+						$epoch = "$pkg->{epoch}:";
+					}
+					push @versions, "$epoch$pkg->{pkgver}-$pkg->{pkgrel}";
+					push @sizes, human($pkg->{compressed_size}); # XXX: there is also installed_size
+					push @dates, $pkg->{build_date};
+					push @urls, $pkg->{url};
 				}
 			}
-			# 2 is architecture, 8 is description
-			push @sizes, "";
-			$i += 7;
 		}
 	}
 	for (my $i = 0; $i < @repos; $i++) {
