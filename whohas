@@ -54,8 +54,8 @@ unless (-d $confdir) {
 my @columns = (11,38,18,4,10,25);
 my $cols = 6;
 
-our $fedora_min_release		 =  26			;
-our $fedora_max_release		 =  27			;
+our $fedora_min_release		 =  ""			;
+our $fedora_max_release		 =  ""			;
 our $debian_current_release	 = "all"		;
 our $ubuntu_current_release	 = "all"		;
 our $openbsd_release		 = "6.0"		;
@@ -194,6 +194,26 @@ sub fedora {
 	my @sizes;
 	my @repos;
 	my @urls;
+
+	if (not $fedora_max_release) {
+		my @lines = split /\n/, &fetchdoc($baseurl);
+		for (my $li = 0; $li < @lines; $li++) {
+			if ($lines[$li] =~ m{ *<img src="[^"]*folder[^"]*" alt="[^"]*"> *<a href="[0-9]+/"}) {
+				my ($release) = ($lines[$li] =~ m{ *<img src="[^"]*folder[^"]*" alt="[^"]*"> *<a href="([0-9]+)/"});
+				if ($release > $fedora_max_release) {
+					$fedora_max_release = $release;
+				}
+			}
+		}
+		if (not $fedora_max_release) {
+			print STDERR "Could not parse Fedora release list, skipping Fedora packages\n";
+			return ();
+		}
+	}
+	if (not $fedora_min_release) {
+		$fedora_min_release = $fedora_max_release - 2;
+	}
+
 	for (my $i = $fedora_max_release; $i >= $fedora_min_release; $i--) {
 		my @fed_urls = ("$i/Everything/$arch/os/Packages/");
 		my $file = "$confdir/$distroname\_$i.list";

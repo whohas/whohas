@@ -9,8 +9,11 @@
 # Versioning information.
 #
 
-#$fedora_min_release = 26;
-#$fedora_max_release = 27;
+# For Fedora, a blank value for max defaults parsing the website for available versions.
+# A blank value for min defaults to (max - 2).
+#$fedora_min_release = '';
+#$fedora_max_release = '';
+
 #$debian_current_release = 'all';
 #$ubuntu_current_release = 'all';
 #$openbsd_release = '6.0';
