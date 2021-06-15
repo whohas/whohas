@@ -198,8 +198,8 @@ sub fedora {
 	if (not $fedora_max_release) {
 		my @lines = split /\n/, &fetchdoc($baseurl);
 		for (my $li = 0; $li < @lines; $li++) {
-			if ($lines[$li] =~ m{ *<img src="[^"]*folder[^"]*" alt="[^"]*"> *<a href="[0-9]+/"}) {
-				my ($release) = ($lines[$li] =~ m{ *<img src="[^"]*folder[^"]*" alt="[^"]*"> *<a href="([0-9]+)/"});
+			if ($lines[$li] =~ m{<img src="[^"]*folder[^"]*" alt="[^"]*"> *<a href="[0-9]+/"}) {
+				my ($release) = ($lines[$li] =~ m{<img src="[^"]*folder[^"]*" alt="[^"]*"> *<a href="([0-9]+)/"});
 				if ($release > $fedora_max_release) {
 					$fedora_max_release = $release;
 				}
