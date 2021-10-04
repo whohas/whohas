@@ -1045,7 +1045,7 @@ sub arch {
 					push @versions, "$epoch$pkg->{pkgver}-$pkg->{pkgrel}";
 					push @sizes, human($pkg->{compressed_size}); # XXX: there is also installed_size
 					push @dates, $pkg->{build_date};
-					push @urls, $pkg->{url};
+					push @urls, "$archbase/packages/$pkg->{repo}/$pkg->{arch}/$pkg->{pkgname}/";
 				}
 			}
 		}
