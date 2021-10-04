@@ -1017,7 +1017,7 @@ sub human {
 }
 
 sub arch {
-	my $archbase   = "https://www.archlinux.org";
+	my $archbase   = "https://archlinux.org";
 	my @lines = split /\n/, &fetchdoc($archbase."/packages/search/json/?q=".$_[0]);
 
 	my @repos;
