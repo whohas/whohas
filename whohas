@@ -187,7 +187,7 @@ sub maxthreads {
 }
 
 sub fedora {
-	my $baseurl = "http://dl.fedoraproject.org/pub/fedora/linux/releases/";
+	my $baseurl = "https://dl.fedoraproject.org/pub/fedora/linux/releases/";
 	my $distroname = "Fedora";
 	my $arch = "x86_64";
 	my $searchy = $_[0];
@@ -261,7 +261,7 @@ sub month_to_digits {
 }
 
 sub macports {
-	my $baseurl = "http://www.macports.org";
+	my $baseurl = "https://www.macports.org";
 	my @names;
 	my @versions;
 	my @dates;
@@ -291,7 +291,7 @@ sub macports {
 
 
 sub fink {
-	my $baseurl = "http://pdb.finkproject.org/pdb/";
+	my $baseurl = "https://pdb.finkproject.org/pdb/";
 	my @names;
 	my @versions;
 	my @dates;
@@ -388,7 +388,7 @@ sub size_trim {
 
 
 sub freebsd {
-	my $query = "http://www.freebsd.org/cgi/ports.cgi?query=".$_[0]."&stype=all";
+	my $query = "https://www.freebsd.org/cgi/ports.cgi?query=".$_[0]."&stype=all";
 	my @lines = split /\n/, &fetchdoc($query);
 	my @names;
 	my @versions;
@@ -404,7 +404,7 @@ sub freebsd {
 			my @subparts = split /\//, $parts[3];
 			push @sizes, "";
 			push @repos, $subparts[@subparts-2];
-			push @urls,  "http://www.freebsd.org/cgi/ports.cgi?stype=all&query=$names[$now]";
+			push @urls,  "https://www.freebsd.org/cgi/ports.cgi?stype=all&query=$names[$now]";
 			$now++;
 			push @dates, "";
 		}
@@ -552,7 +552,7 @@ sub openbsd_combos {
 sub openbsd_newer {
 	my $rel = $openbsd_release;
 	my $arch = "i386";
-	my $baseurl = 'http://ftp.openbsd.org/pub/OpenBSD/'.$rel.'/packages/'.$arch.'/';
+	my $baseurl = 'https://ftp.openbsd.org/pub/OpenBSD/'.$rel.'/packages/'.$arch.'/';
 	my @names;
 	my @versions;
 	my @urls;
@@ -599,7 +599,7 @@ sub openbsd_newer {
 sub openbsd_older {
 	my $rel = $openbsd_release;
 	my $arch = "i386";
-	my $baseurl = "http://www.openbsd.org/".$rel.'_packages/';
+	my $baseurl = "https://www.openbsd.org/".$rel.'_packages/';
 	my @names;
 	my @versions;
 	my @urls;
@@ -646,7 +646,7 @@ sub openbsd_older {
 }
 
 sub cygwin {
-	my $baseurl = "http://www.cygwin.com/packages";
+	my $baseurl = "https://www.cygwin.com/packages";
 	my @names;
 	my @versions;
 	my @urls;
@@ -693,8 +693,8 @@ sub cygwin {
 }
 
 sub gentoo {
-	my $gentoobase = "http://gpo.zugaina.org/";
-	my $gentoobaseofficial = "http://packages.gentoo.org/package";
+	my $gentoobase = "https://gpo.zugaina.org/";
+	my $gentoobaseofficial = "https://packages.gentoo.org/package";
 	my $distroname = "Gentoo";
 	my @names;
 	my @versions;
@@ -816,7 +816,7 @@ sub slack_combos {
 }
 
 sub slack {
-	my $slackbase  = "http://packages.slackware.com/";
+	my $slackbase  = "https://packages.slackware.com/";
 	my @repos;
 	my @groups;
 	my @names;
@@ -892,13 +892,13 @@ sub debian_size_convert {
 
 sub debian {
 	my @dists = ($debian_current_release);
-	&debuntu('http://packages.debian.org','Debian',\@dists,$_[0]);
+	&debuntu('https://packages.debian.org','Debian',\@dists,$_[0]);
 	return();
 }
 
 sub ubuntu {
 	my @array = ($ubuntu_current_release);
-	&debuntu('http://packages.ubuntu.com','Ubuntu',\@array,$_[0]);
+	&debuntu('https://packages.ubuntu.com','Ubuntu',\@array,$_[0]);
 	return();
 }
 
@@ -1155,7 +1155,7 @@ sub trim($) {
 }
 
 sub opensuse {
-	my $opensusebase = "http://software.opensuse.org";
+	my $opensusebase = "https://software.opensuse.org";
 	my @names;
 	my @repos;
 	my @groups;
@@ -1238,7 +1238,7 @@ sub sizeconvert {
 }
 
 sub netbsd {
-	my @lines = split /\n|<br\/>/, &fetchdoc("http://pkgsrc.se/search.php?so=".$_[0]);
+	my @lines = split /\n|<br\/>/, &fetchdoc("https://pkgsrc.se/search.php?so=".$_[0]);
 	my @names;
 	my @versions;
 	my @dates;
