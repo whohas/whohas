@@ -60,7 +60,7 @@ our $fedora_min_release		 =  ""			;
 our $fedora_max_release		 =  ""			;
 our $debian_current_release	 = "all"		;
 our $ubuntu_current_release	 = "all"		;
-our $openbsd_release		 = "6.0"		;
+our $openbsd_release		 = "7.0"		;
 
 my @distrosAvailable = qw(arch cygwin debian fedora fink freebsd gentoo macports mandriva netbsd openbsd opensuse slack sourcemage ubuntu);
 my %distrosSelected;
