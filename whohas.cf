@@ -16,7 +16,7 @@
 
 #$debian_current_release = 'all';
 #$ubuntu_current_release = 'all';
-#$openbsd_release = '6.0';
+#$openbsd_release = '7.1';
 
 #
 # Inclusion of distributions.
