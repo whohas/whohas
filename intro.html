@@ -18,7 +18,7 @@
 <p><a href="html_assets/screenshot.jpg"><img border=0 src="html_assets/screenshot.jpg" width="500px"></a></p>
 <h2>whohas</h2>
 <h3>Description</h3>
-<p>whohas is a command line tool that allows querying several package lists at once - currently supported are Arch, Debian, Fedora, Gentoo, Mandriva, openSUSE, Slackware, Source Mage, Ubuntu, FreeBSD, NetBSD, OpenBSD, Fink, MacPorts and Cygwin. whohas is written in Perl and was designed to help package maintainers find ebuilds, pkgbuilds and similar package definitions from other distributions to learn from. However, it can also be used by normal users who want to know:</p>
+<p>whohas is a command line tool that allows querying several package lists at once - currently supported are Arch, Debian, Fedora, Gentoo, Mageia, openSUSE, Slackware, Source Mage, Ubuntu, FreeBSD, NetBSD, OpenBSD, Fink, MacPorts and Cygwin. whohas is written in Perl and was designed to help package maintainers find ebuilds, pkgbuilds and similar package definitions from other distributions to learn from. However, it can also be used by normal users who want to know:</p>
 <ul>
 <li>Which distribution provides packages on which the user depends.</li>
 <li>What version of a given package is in use in each distribution, or in each release of a distribution (implemented only for Debian).</li>
@@ -35,7 +35,7 @@
 <p>The spaces will ensure that only results for the package gimp are displayed, not for gimp-print etc.</p>
 <p>If you want results for a particular distribution only, do</p>
 <p class=code>whohas arch | grep "^Arch"</p>
-<p>Output for each module will still be ordered, so you don't need to sort results in this case, although you may wish to do so for some distributions. Distribution names are abbreviated as "Arch", "Debian", "Fedora", "Gentoo", "Mandriva", "openSUSE", "Slackware", "Source Mage", "FreeBSD", "NetBSD", "OpenBSD", "Fink", "MacPorts", and "Cygwin".</p>
+<p>Output for each module will still be ordered, so you don't need to sort results in this case, although you may wish to do so for some distributions. Distribution names are abbreviated as "Arch", "Debian", "Fedora", "Gentoo", "Mageia", "openSUSE", "Slackware", "Source Mage", "FreeBSD", "NetBSD", "OpenBSD", "Fink", "MacPorts", and "Cygwin".</p>
 <p>Output in version 0.1 <a href="output0.txt">looked like this</a>. The first column is the name of the distribution, the second the name of the package, the third the version number, then the date, repository name and a url linking to more information about the package. Future versions will have package size information, too. Column lengths are fixed, so you can use cut:</p>
 <p class=code>whohas vim | grep " vim " | cut -b 38-47</p>
 <p>The first bytes of the data fields at the time of writing are 0, 11, 49, 67, 71, 81 and 106.</p>

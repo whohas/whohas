@@ -62,7 +62,7 @@ our $debian_current_release	 = "all"		;
 our $ubuntu_current_release	 = "all"		;
 our $openbsd_release		 = ""		;
 
-my @distrosAvailable = qw(arch cygwin debian fedora fink freebsd gentoo macports mandriva netbsd openbsd opensuse slack sourcemage ubuntu);
+my @distrosAvailable = qw(arch cygwin debian fedora fink freebsd gentoo macports mageia netbsd openbsd opensuse slack sourcemage ubuntu);
 my %distrosSelected;
 foreach (@distrosAvailable) {
 	$distrosSelected{$_} = 1;
@@ -1346,7 +1346,7 @@ sub template_listing {
 	return ();
 }
 
-sub mandriva_combos {
+sub mageia_combos {
 	$_[0] =~ s/\<\/a\>.*//;
 	my @parts = split /-/, $_[0];
 	for (my $i = 1; $i < @parts; $i++) {
@@ -1356,7 +1356,7 @@ sub mandriva_combos {
 	}
 }
 
-sub mandriva {
+sub mageia {
 	my $baseurl = "http://sophie.zarb.org";
 	my @names;
 	my @versions;
@@ -1365,18 +1365,18 @@ sub mandriva {
 	my @repos;
 	my @urls;
 	# NB this server also supports exact matching
-	my @lines = split /\n/, &fetchdoc($baseurl."/search?search=".$_[0]."&type=fuzzyname&deptype=P&distribution=Mandriva&release=current");
+	my @lines = split /\n/, &fetchdoc($baseurl."/search?search=".$_[0]."&type=fuzzyname&deptype=P&distribution=Mageia&release=cauldron");
 	for (my $i = 350; $i < @lines; $i++) {
 		#TODO need to check for possible further pages (lists 20 per page)
 		#TODO ajax or xml::rpc access might have advantages w.r.t. paging (i.e. none required) 
 		if ($lines[$i] =~ /<div class="sophie_search_list">/) {
 			my $a = @names;
 			push @urls, (split /"/, $lines[$i+1])[1];
-			($names[$a],$versions[$a]) = &mandriva_combos($lines[$i+2]); # name, version, arch
+			($names[$a],$versions[$a]) = &mageia_combos($lines[$i+2]); # name, version, arch
 		}
 	}
 	for (my $i = 0; $i < @urls; $i++) {
-		&pretty_print($cols,@columns,"Mandriva",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+		&pretty_print($cols,@columns,"Mageia",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
 	return ();
 }
