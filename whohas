@@ -60,7 +60,7 @@ our $fedora_min_release		 =  ""			;
 our $fedora_max_release		 =  ""			;
 our $debian_current_release	 = "all"		;
 our $ubuntu_current_release	 = "all"		;
-our $openbsd_release		 = "7.0"		;
+our $openbsd_release		 = ""		;
 
 my @distrosAvailable = qw(arch cygwin debian fedora fink freebsd gentoo macports mandriva netbsd openbsd opensuse slack sourcemage ubuntu);
 my %distrosSelected;
@@ -531,15 +531,6 @@ sub netbsd_old {
 	return ();
 }
 
-sub openbsd {
-	if ($openbsd_release < 5) {
-		&openbsd_older(@_);
-	} else {
-		&openbsd_newer(@_);
-	}
-	return();
-}
-
 sub openbsd_combos {
 	my @parts = split /-/, $_[0];
 	for (my $i = 1; $i < @parts; $i++) {
@@ -549,10 +540,9 @@ sub openbsd_combos {
 	}
 }
 
-sub openbsd_newer {
-	my $rel = $openbsd_release;
+sub openbsd {
+	my $baserepourl = 'https://ftp.openbsd.org/pub/OpenBSD/';
 	my $arch = "i386";
-	my $baseurl = 'https://ftp.openbsd.org/pub/OpenBSD/'.$rel.'/packages/'.$arch.'/';
 	my @names;
 	my @versions;
 	my @urls;
@@ -560,7 +550,27 @@ sub openbsd_newer {
 	my @sizes;
 	my @dates;
 	my $distroname = "OpenBSD";
+
+	if (not $openbsd_release) {
+		my @lines = split /\n/, &fetchdoc($baserepourl);
+		for (my $li = 0; $li < @lines; $li++) {
+			if ($lines[$li] =~ m{<a href="\d+\.\d+/"}) {
+				my ($release) = ($lines[$li] =~ m{<a href="(\d+\.\d+)/"});
+				if ($release > $openbsd_release) {
+					$openbsd_release = $release;
+				}
+			}
+		}
+		if (not $openbsd_release) {
+			print STDERR "Could not parse OpenBSD release list, skipping OpenBSD packages\n";
+			return ();
+		}
+	}
+
+	my $rel = $openbsd_release;
+	my $baseurl = 'https://ftp.openbsd.org/pub/OpenBSD/'.$rel.'/packages/'.$arch.'/';
 	my $file = "$confdir/$distroname\_$rel.list";
+
 	# if the list file exists and is recent, use its contents, otherwise download and parse a fresh copy
 	if (-s $file && `date +%Y-%m-%d` =~ (split / /, `ls -l $file`)[6]) {
 		open IN, $file;
@@ -584,55 +594,6 @@ sub openbsd_newer {
 		open OUT, ">$file";
 		for (my $i = 0; $i < @names;$i++) {
 			print OUT "$names[$i]\t$versions[$i]\t$dates[$i]\t$sizes[$i]\n";
-		}
-		close OUT;
-	}
-	my $matcher = $_[0];
-	for (my $i = 0; $i < @names; $i++) {
-		if ($names[$i] =~ /$matcher/i) {
-			&pretty_print($cols,@columns,$distroname,$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
-		}
-	}
-	return ();
-}
-
-sub openbsd_older {
-	my $rel = $openbsd_release;
-	my $arch = "i386";
-	my $baseurl = "https://www.openbsd.org/".$rel.'_packages/';
-	my @names;
-	my @versions;
-	my @urls;
-	my @repos;
-	my @sizes;
-	my @dates;
-	my $distroname = "OpenBSD";
-	my $file = "$confdir/$distroname\_$rel.list";
-	# if the list file exists and is recent, use its contents, otherwise download and parse a fresh copy
-	if (-s $file && `date +%Y-%m-%d` =~ (split / /, `ls -l $file`)[6]) {
-		open IN, $file;
-		chomp (my @lines = <IN>);
-		for (my $i = 0; $i<@lines;$i++) {
-			($names[$i],$versions[$i],$urls[$i]) = split /\t/, $lines[$i];
-		}
-		close IN;
-	} else {
-		my @lines = split /\n/, &fetchdoc($baseurl.$arch.".html");
-		my $now = 0;
-		for (my $i = 0; $i < @lines; $i++) {
-			if ($lines[$i] =~ /^<td><b><a/) {
-				my @parts = split />|href=|\.tgz</, $lines[$i];
-				push @urls, $baseurl.$parts[3];
-				($names[$now],$versions[$now]) = &combos($parts[4]);
-				$now++;
-				push @repos, "";
-				push @sizes, "";
-				push @dates, "";
-			}
-		}
-		open OUT, ">$file";
-		for (my $i = 0; $i < @urls;$i++) {
-			print OUT "$names[$i]\t$versions[$i]\t$urls[$i]\n";
 		}
 		close OUT;
 	}

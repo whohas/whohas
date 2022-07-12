@@ -16,7 +16,8 @@
 
 #$debian_current_release = 'all';
 #$ubuntu_current_release = 'all';
-#$openbsd_release = '7.1';
+# For OpenBSD, a blank value for release defaults parsing the website for the latest version.
+#$openbsd_release = '';
 
 #
 # Inclusion of distributions.
