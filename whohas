@@ -166,6 +166,12 @@ if (!$nothreads) {
 	worker();
 }
 
+#
+# END OF MAIN
+#
+# DISPATCH HELPER FUNCTIONS BELOW
+#
+
 sub worker {
 	no strict "refs";
 	while (defined(my $distro = $q->dequeue())) {
@@ -185,6 +191,11 @@ sub maxthreads {
 		return $cpucount < $jobcount ? $cpucount : $jobcount;
 	}
 }
+
+#
+# DISTRO-SPECIFIC MODULES
+# (FUNCTIONS THAT QUERY SPECIFIC REPOSITORY/LIST SERVERS)
+#
 
 sub fedora {
 	my $baseurl = "https://dl.fedoraproject.org/pub/fedora/linux/releases/";
