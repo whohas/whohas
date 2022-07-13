@@ -31,7 +31,8 @@ Debian    gaim                      1                     oldstable   http://pac
 Debian    gaim                      1                     stable      http://packages.debian.org/stable/net/gaim
 Debian    gaim                      1                     testing     http://packages.debian.org/testing/net/gaim
 Debian    gaim                      1                     unstable    http://packages.debian.org/unstable/net/gaim
-Debian    gaim-autoprofile          2.10-1                testing     http://packages.debian.org/testing/net/gaim-autoprofileDebian    gaim-autoprofile          2.10-2                unstable    http://packages.debian.org/unstable/net/gaim-autoprofile
+Debian    gaim-autoprofile          2.10-1                testing     http://packages.debian.org/testing/net/gaim-autoprofile
+Debian    gaim-autoprofile          2.10-2                unstable    http://packages.debian.org/unstable/net/gaim-autoprofile
 Debian    gaim-common               1                     oldstable   http://packages.debian.org/oldstable/net/gaim-common
 Debian    gaim-data                 1                     stable      http://packages.debian.org/stable/net/gaim-data
 Debian    gaim-data                 1                     testing     http://packages.debian.org/testing/net/gaim-data
@@ -41,11 +42,13 @@ Debian    gaim-dev                  1                     testing     http://pac
 Debian    gaim-dev                  1                     unstable    http://packages.debian.org/unstable/devel/gaim-dev
 Debian    gaim-encryption           2.36-3                stable      http://packages.debian.org/stable/net/gaim-encryption
 Debian    gaim-encryption           2.37-1                testing     http://packages.debian.org/testing/net/gaim-encryption
-Debian    gaim-encryption           2.38-1                unstable    http://packages.debian.org/unstable/net/gaim-encryptionDebian    gaim-extendedprefs        0.4-4                 stable      http://packages.debian.org/stable/net/gaim-extendedprefs
+Debian    gaim-encryption           2.38-1                unstable    http://packages.debian.org/unstable/net/gaim-encryption
+Debian    gaim-extendedprefs        0.4-4                 stable      http://packages.debian.org/stable/net/gaim-extendedprefs
 Debian    gaim-extendedprefs        0.4-4                 testing     http://packages.debian.org/testing/net/gaim-extendedprefs
 Debian    gaim-extendedprefs        0.4-6                 unstable    http://packages.debian.org/unstable/net/gaim-extendedprefs
 Debian    gaim-gnome                1                     oldstable   http://packages.debian.org/oldstable/net/gaim-gnome
-Debian    gaim-guifications         2.10-1                stable      http://packages.debian.org/stable/net/gaim-guificationsDebian    gaim-guifications         2.10-1                testing     http://packages.debian.org/testing/net/gaim-guifications
+Debian    gaim-guifications         2.10-1                stable      http://packages.debian.org/stable/net/gaim-guifications
+Debian    gaim-guifications         2.10-1                testing     http://packages.debian.org/testing/net/gaim-guifications
 Debian    gaim-guifications         2.10-1                unstable    http://packages.debian.org/unstable/net/gaim-guifications
 Debian    gaim-meanwhile            1.2.3-1               testing     http://packages.debian.org/testing/net/gaim-meanwhile
 Debian    gaim-meanwhile            1.2.3-1               unstable    http://packages.debian.org/unstable/net/gaim-meanwhile
@@ -63,7 +66,9 @@ Gentoo    gaim-meanwhile            1.2.2      04-05-2005             http://pac
 Gentoo    gaim-meanwhile            1.2.0      10-04-2005             http://packages.gentoo.org/ebuilds/?gaim-meanwhile-1.2.0
 Gentoo    gaim-meanwhile            1.0.2      08-02-2005             http://packages.gentoo.org/ebuilds/?gaim-meanwhile-1.0.2
 Gentoo    gaim-snpp                 0.8.0      21-02-2005             http://packages.gentoo.org/ebuilds/?gaim-snpp-0.8.0
-Gentoo    gaim-assistant            0.09       06-01-2005             http://packages.gentoo.org/ebuilds/?gaim-assistant-0.09Gentoo    gaim-assistant            0.07       06-01-2005             http://packages.gentoo.org/ebuilds/?gaim-assistant-0.07Gentoo    gaim-encryption           2.38       12-07-2005             http://packages.gentoo.org/ebuilds/?gaim-encryption-2.38
+Gentoo    gaim-assistant            0.09       06-01-2005             http://packages.gentoo.org/ebuilds/?gaim-assistant-0.09
+Gentoo    gaim-assistant            0.07       06-01-2005             http://packages.gentoo.org/ebuilds/?gaim-assistant-0.07
+Gentoo    gaim-encryption           2.38       12-07-2005             http://packages.gentoo.org/ebuilds/?gaim-encryption-2.38
 Gentoo    gaim-encryption           2.37       13-05-2005             http://packages.gentoo.org/ebuilds/?gaim-encryption-2.37
 Gentoo    gaim-encryption           2.36       07-07-2005             http://packages.gentoo.org/ebuilds/?gaim-encryption-2.36
 Gentoo    gaim-encryption           2.35       27-02-2005             http://packages.gentoo.org/ebuilds/?gaim-encryption-2.35
