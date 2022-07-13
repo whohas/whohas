@@ -62,7 +62,7 @@ our $debian_current_release	 = "all"		;
 our $ubuntu_current_release	 = "all"		;
 our $openbsd_release		 = ""		;
 
-my @distrosAvailable = qw(arch cygwin debian fedora fink freebsd gentoo macports mandriva netbsd openbsd opensuse slack sourcemage ubuntu);
+my @distrosAvailable = qw(arch cygwin debian fedora fink freebsd gentoo macports mageia mandriva netbsd openbsd opensuse slack sourcemage ubuntu);
 my %distrosSelected;
 foreach (@distrosAvailable) {
 	$distrosSelected{$_} = 1;
@@ -1357,6 +1357,14 @@ sub mandriva_combos {
 }
 
 sub mandriva {
+	&zarb($_[0], 'Mandriva', 'current');
+}
+
+sub mageia {
+	&zarb($_[0], 'Mageia', 'cauldron');
+}
+
+sub zarb {
 	my $baseurl = "http://sophie.zarb.org";
 	my @names;
 	my @versions;
@@ -1365,7 +1373,7 @@ sub mandriva {
 	my @repos;
 	my @urls;
 	# NB this server also supports exact matching
-	my @lines = split /\n/, &fetchdoc($baseurl."/search?search=".$_[0]."&type=fuzzyname&deptype=P&distribution=Mandriva&release=current");
+	my @lines = split /\n/, &fetchdoc($baseurl."/search?search=".$_[0]."&type=fuzzyname&deptype=P&distribution=".$_[1]."&release=".$_[2]);
 	for (my $i = 350; $i < @lines; $i++) {
 		#TODO need to check for possible further pages (lists 20 per page)
 		#TODO ajax or xml::rpc access might have advantages w.r.t. paging (i.e. none required) 
@@ -1376,7 +1384,7 @@ sub mandriva {
 		}
 	}
 	for (my $i = 0; $i < @urls; $i++) {
-		&pretty_print($cols,@columns,"Mandriva",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
+		&pretty_print($cols,@columns,$_[1],$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
 	return ();
 }
