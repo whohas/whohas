@@ -22,6 +22,6 @@
 #
 # Inclusion of distributions.
 #
-#@distroSelections = qw(arch cygwin debian fedora fink freebsd gentoo macports mandriva netbsd openbsd opensuse slack sourcemage ubuntu);
+#@distroSelections = qw(arch cygwin debian fedora fink freebsd gentoo macports mageia mandriva netbsd openbsd opensuse slack sourcemage ubuntu);
 
 1;
