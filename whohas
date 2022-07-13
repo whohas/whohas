@@ -1003,6 +1003,15 @@ sub arch {
 	return ();
 }
 
+sub remove_td {
+	my @retsplit = split /\<\/?td\>/, $_[0];
+	return $retsplit[1];
+}
+sub arch_extract_name {
+	my @retsplit  = split /\"\>|\<\/a\>/, $_[0];
+	return $retsplit[1];
+}
+
 sub fetchdoc {
 	my $url = $_[0];
 	my $silent = 0;
