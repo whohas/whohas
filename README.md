@@ -4,7 +4,7 @@ More information can be found at http://www.philippwesche.org/200811/whohas/intr
 
 Philipp L. Wesche
 
-whohas is a command line tool that allows querying several package lists at once - currently supported are Arch, Debian, Gentoo and Slackware. whohas is written in Perl and was designed to help package maintainers find ebuilds, pkgbuilds and similar package definitions from other distributions to learn from. However, it can also be used by normal users who want to know:
+whohas is a command line tool that allows querying several package lists at once - currently supported are Arch, Debian, Fedora, Gentoo, Mageia, Mandriva, openSUSE, Slackware, Source Mage, Ubuntu, FreeBSD, NetBSD, OpenBSD, Fink, MacPorts and Cygwin. whohas is written in Perl and was designed to help package maintainers find ebuilds, pkgbuilds and similar package definitions from other distributions to learn from. However, it can also be used by normal users who want to know:
 - Which distribution has packages available for apps upon whom the user depends.
 - What version of a given package is in use in each distribution, or in each release of a distribution (implemented only for Debian).
 
