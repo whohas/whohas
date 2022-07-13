@@ -982,8 +982,8 @@ sub human {
 
 sub arch {
 	my $archbase   = "https://archlinux.org";
-	my @lines = split /\n/, &fetchdoc($archbase."/packages/search/json/?q=".$_[0]);
-
+	# if we directly query i686, redirected to the specific package page
+	my @lines = split /\n/, &fetchdoc($archbase."/packages/?q=".$_[0]);
 	my @repos;
 	my @names;
 	my @versions;
@@ -991,58 +991,16 @@ sub arch {
 	my @urls;
 	my @sizes;
 	for (my $i = 0; $i < @lines; $i++) {
-		if ($lines[$i] =~ /\{/) {
-			my $content = decode_json($lines[$i]);
-			if ($content->{version} != 2 ) {
-				warn ("Unknown version");
-				return ();
-			}
-			for (my $i = 0; $i < @{$content->{results}}; $i++) {
-				my $pkg = $content->{results}[$i];
-				if ($pkg->{pkgname} =~ $_[0]) {
-					push @repos, $pkg->{repo};
-					push @names, $pkg->{pkgname};
-					my $epoch = "";
-					if ($pkg->{epoch} != 0) {
-						$epoch = "$pkg->{epoch}:";
-					}
-					push @versions, "$epoch$pkg->{pkgver}-$pkg->{pkgrel}";
-					push @sizes, human($pkg->{compressed_size}); # XXX: there is also installed_size
-					push @dates, $pkg->{build_date};
-					push @urls, "$archbase/packages/$pkg->{repo}/$pkg->{arch}/$pkg->{pkgname}/";
-				}
-			}
+		if ($lines[$i] =~ /View package details for/) {
+			push @versions, &remove_td($lines[$i + 2]);
+			push @dates,    &remove_td($lines[$i + 5]);
+			push @names,    &arch_extract_name($lines[$i]);
 		}
 	}
-	for (my $i = 0; $i < @repos; $i++) {
+	for (my $i = 0; $i < @names; $i++) {
 		&pretty_print($cols,@columns,"Arch",$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
 	return ();
-}
-
-sub arch_site_get_url {
-	my $temp = $_[0];
-	$temp =~ s/.*\<a href=\"|\".*//g;
-	return $temp;
-}
-
-sub arch_site_get_cont {
- 	my @parts = split />/, $_[0];
- 	for (my $i = 0; $i < @parts; $i++) {
- 		if ($parts[$i] =~ /^[A-Za-z0-9]/) {
- 			return (split /</, $parts[$i])[0];
- 		}
- 	}
-}
-
-sub arch_site_ger_cont {
-	my $temp = $_[0];
-	$temp =~ s/.*\"\>|\<\/a.*//g;
-	return $temp;
-}
-
-sub aur_site_get_url {
-	return (split /\'/, $_[0])[5];
 }
 
 sub fetchdoc {
