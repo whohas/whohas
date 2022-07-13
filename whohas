@@ -3,7 +3,7 @@
 # whohas, a Perl utility to display availability of source
 # and binary packages from major Linux and BSD distributions
 #
-# Copyright (C) Philipp L. Wesche 2005-2011
+# Copyright (C) Philipp L. Wesche 2005-2022
 #
 #
 # This program is free software; you can redistribute it and/or modify
@@ -627,23 +627,24 @@ sub cygwin {
 			$parts[0] =~ s{^<a href="?}{};
 			$parts[0] =~ s{</a>$}{};
 			my ($temp, $name) = split /"?>/, $parts[0], 2;
-			next unless $name =~ /$searchy/i;
-			my @detailLines = split /\n/, &fetchdoc("$baseurl/$temp/");
-			my $highest = '';
-			for (my $a = 0; $a < @detailLines; $a++) { # incrementing ensures that the highest version number will prevail
-								   # (higher ones occur lower down at time of writing)
-				if ($detailLines[$a] =~ /<li><a href="/ && $detailLines[$a] !~ /\-src\<\/a\>\<\/li\>/) {
-					$highest = (split /<a href="|">/, $detailLines[$a])[1]; # due to server apache config currently only works when $arch eq 'x86_64' - more work needed
+			if ($name =~ /$searchy/i) {
+				my @detailLines = split /\n/, &fetchdoc("$baseurl/$temp");
+				my @highest;
+				for (my $a = 0; $a < @detailLines; $a++) { # incrementing ensures that the highest version number will prevail
+									   # (higher ones occur lower down at time of writing)
+					if ($detailLines[$a] =~ /\<\/td\>\<td class\=\"right\"\>/ && $detailLines[$a] !~ /\-src\<\/a\>\<\/li\>/) {
+						@highest = split /\<td\>|\<\/td\>|\<td class\=\"right\"\>/, $detailLines[$a]; # due to server apache config currently only works when $arch eq 'x86_64' - more work needed
+					}
 				}
+				push @versions, $highest[1];
+				my @comps = split /\//, $temp;
+				push @names,    $name;
+				push @archs,    $comps[0];
+				push @dates,    $highest[5];
+				push @urls,     "$baseurl/$temp";
+				push @sizes,    $highest[3];   #TODO make less accurate (e.g. KiB -> M) to fit column, like Debian
+				push @repos,    '';
 			}
-			push @versions, (&combos($highest))[1];
-			my @comps = split /\//, $temp;
-			push @names,    $comps[1];
-			push @archs,    $comps[0];
-			push @dates,    '';
-			push @urls,     "$baseurl/$temp/$highest";
-			push @sizes,    '';
-			push @repos,    '';
 		}
 	}
 	for (my $i = 0; $i < @names; $i++) {
