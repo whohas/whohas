@@ -1015,75 +1015,6 @@ sub arch_extract_name {
 	return $retsplit[1];
 }
 
-sub fetchdoc {
-	my $url = $_[0];
-	my $silent = 0;
-	if (@_ == 2 && $_[1] eq "silent") {
-		$silent = 1;
-	}
-
-	$url =~ s/\&amp\;/\&/ig;   # convert &amp; to &
-
-	my $ua = LWP::UserAgent->new;
-	$ua->env_proxy;
-        my @firstline;
-        my @response;
-        for (my $count = 0; ; ++$count) {   # termination condition inside loop
-                my $req = HTTP::Request->new(GET => $url);
-                my $res = $ua->request($req)->as_string;
-                @response = split (/\n/, $res);
-                @firstline = split (/ /, $response[0]);
-		my $restest = 0;
-		if (@firstline == 3) {
-			$restest = $firstline[1];
-		} elsif (@firstline > 3) {
-			$restest = $firstline[0];
-		}
-		if ($restest == 200 || $response[0] =~ /200 OK/) { #NB the matching expression added specifically for NetBSD package page!
-		# server response 200 is a stringent criterion, but should work
-			last;
-		} elsif ($count > 4) {   # loop termination condition
-			unless ($silent == 1) {
-				warn ("Tried fetching \"$url\" five times. Giving up.\n");
-			}
-			return ();
-			last;
-		}
-	}
-    my $end = @response - 1;
-    my $finaldoc = join ("\n", @response[14..$end]);
-    return ($finaldoc);
-}
-
-sub pretty_print {
-	if( $option_strict && trim($_[$cols+2]) ne $ARGV[0]) {
-		return; # strictness enabled, we should print exact matches only
-	}
-	my $n = $_[0];
-	my @colwidths = @_[1..$n];
-	my @colvals = @_[($n+1)..(@_-1)];
-	for (my $i = 0; $i < @colwidths;$i++) {
-		if (length($colvals[$i]) > $colwidths[$i]) {
-			my @letters = split //, $colvals[$i];
-			print join "", @letters[0..($colwidths[$i]-1)];
-			print " ";
-		} else {
-			print $colvals[$i];
-			for (my $a = 0; $a < $colwidths[$i] + 1 - length($colvals[$i]); $a++) {
-				print " ";
-			}
-		}
-	}
-	print $colvals[@colvals-1]."\n"; #last column is unrestricted in length
-}
-
-sub trim {
-	# Perl trim function to remove whitespace from the start and end of the string
-	$_[0] =~ s/^\s+//;
-	$_[0] =~ s/\s+$//;
-	return $_[0];
-}
-
 sub opensuse {
 	my $opensusebase = "https://software.opensuse.org";
 	my @names;
@@ -1377,4 +1308,77 @@ sub zarb {
 		&pretty_print($cols,@columns,$_[1],$names[$i],$versions[$i],$sizes[$i],$dates[$i],$repos[$i],$urls[$i]);
 	}
 	return ();
+}
+
+#
+# INFRASTRUCTURE FUNCTIONS
+#
+
+sub fetchdoc {
+	my $url = $_[0];
+	my $silent = 0;
+	if (@_ == 2 && $_[1] eq "silent") {
+		$silent = 1;
+	}
+
+	$url =~ s/\&amp\;/\&/ig;   # convert &amp; to &
+
+	my $ua = LWP::UserAgent->new;
+	$ua->env_proxy;
+        my @firstline;
+        my @response;
+        for (my $count = 0; ; ++$count) {   # termination condition inside loop
+                my $req = HTTP::Request->new(GET => $url);
+                my $res = $ua->request($req)->as_string;
+                @response = split (/\n/, $res);
+                @firstline = split (/ /, $response[0]);
+		my $restest = 0;
+		if (@firstline == 3) {
+			$restest = $firstline[1];
+		} elsif (@firstline > 3) {
+			$restest = $firstline[0];
+		}
+		if ($restest == 200 || $response[0] =~ /200 OK/) { #NB the matching expression added specifically for NetBSD package page!
+		# server response 200 is a stringent criterion, but should work
+			last;
+		} elsif ($count > 4) {   # loop termination condition
+			unless ($silent == 1) {
+				warn ("Tried fetching \"$url\" five times. Giving up.\n");
+			}
+			return ();
+			last;
+		}
+	}
+    my $end = @response - 1;
+    my $finaldoc = join ("\n", @response[14..$end]);
+    return ($finaldoc);
+}
+
+sub pretty_print {
+	if( $option_strict && trim($_[$cols+2]) ne $ARGV[0]) {
+		return; # strictness enabled, we should print exact matches only
+	}
+	my $n = $_[0];
+	my @colwidths = @_[1..$n];
+	my @colvals = @_[($n+1)..(@_-1)];
+	for (my $i = 0; $i < @colwidths;$i++) {
+		if (length($colvals[$i]) > $colwidths[$i]) {
+			my @letters = split //, $colvals[$i];
+			print join "", @letters[0..($colwidths[$i]-1)];
+			print " ";
+		} else {
+			print $colvals[$i];
+			for (my $a = 0; $a < $colwidths[$i] + 1 - length($colvals[$i]); $a++) {
+				print " ";
+			}
+		}
+	}
+	print $colvals[@colvals-1]."\n"; #last column is unrestricted in length
+}
+
+sub trim {
+	# Perl trim function to remove whitespace from the start and end of the string
+	$_[0] =~ s/^\s+//;
+	$_[0] =~ s/\s+$//;
+	return $_[0];
 }
