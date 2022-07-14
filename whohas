@@ -1077,13 +1077,11 @@ sub pretty_print {
 	print $colvals[@colvals-1]."\n"; #last column is unrestricted in length
 }
 
-sub trim($) {
-	# Perl trim function to remove whitespace from the start and end of the
-	# string
-	my $string = shift;
-	$string =~ s/^\s+//;
-	$string =~ s/\s+$//;
-	return $string;
+sub trim {
+	# Perl trim function to remove whitespace from the start and end of the string
+	$_[0] =~ s/^\s+//;
+	$_[0] =~ s/\s+$//;
+	return $_[0];
 }
 
 sub opensuse {
